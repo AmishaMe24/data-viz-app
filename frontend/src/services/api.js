@@ -20,10 +20,29 @@ const api = {
   },
   
   getTaskRecords: async (taskId, filters = {}) => {
-    const response = await axios.get(`${API_URL}/tasks/${taskId}/records`, {
-      params: filters
-    });
-    return response.data;
+    try {
+      // Create params object for axios
+      const params = {};
+      
+      // Add regular filters
+      Object.entries(filters).forEach(([key, value]) => {
+        if (key !== 'companies' && value) {
+          params[key] = value;
+        }
+      });
+      
+      // Handle companies array
+      if (filters.companies && filters.companies.length > 0) {
+        params.companies = filters.companies;
+      }
+      
+      console.log("Sending params to API:", params);
+      const response = await axios.get(`${API_URL}/tasks/${taskId}/records`, { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching task records:', error);
+      throw error;
+    }
   },
   
   // Analytics endpoints

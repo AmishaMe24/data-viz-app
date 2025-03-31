@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db.database import get_db
@@ -66,24 +66,46 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 @router.get("/tasks/{task_id}/records", response_model=List[RecordResponse])
 def get_task_records(
     task_id: int, 
-    company: Optional[str] = None,
+    companies: Optional[List[str]] = Query(None),  # Use Query to properly handle arrays
     model: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(Record).filter(Record.task_id == task_id)
+    print(f"Companies filter: {companies}")
     
-    if company:
-        query = query.filter(Record.company == company)
+    # Handle multiple companies filter
+    if companies:
+        # Make sure companies is a list
+        if isinstance(companies, str):
+            companies = [companies]
+        query = query.filter(Record.company.in_(companies))
+    
     if model:
         query = query.filter(Record.model == model)
     if start_date:
-        start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
-        query = query.filter(Record.sale_date >= start_date)
+        try:
+            start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(Record.sale_date >= start_date)
+        except ValueError:
+            # Try parsing as just a year
+            try:
+                start_date = datetime.datetime.strptime(f"{start_date}-01-01", "%Y-%m-%d")
+                query = query.filter(Record.sale_date >= start_date)
+            except ValueError:
+                pass
     if end_date:
-        end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
-        query = query.filter(Record.sale_date <= end_date)
+        try:
+            end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+            query = query.filter(Record.sale_date <= end_date)
+        except ValueError:
+            # Try parsing as just a year
+            try:
+                end_date = datetime.datetime.strptime(f"{end_date}-12-31", "%Y-%m-%d")
+                query = query.filter(Record.sale_date <= end_date)
+            except ValueError:
+                pass
     
     return query.all()
 
