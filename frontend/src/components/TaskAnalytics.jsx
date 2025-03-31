@@ -212,7 +212,9 @@ const TaskAnalytics = () => {
       }
 
       months[monthKey].sales += Number(item.total_sales || item.sales || 0);
-      months[monthKey].revenue += Number(item.total_revenue || item.revenue || 0);
+      months[monthKey].revenue += Number(
+        item.total_revenue || item.revenue || 0
+      );
     });
 
     // Calculate trend (compare last two months)
@@ -398,231 +400,244 @@ const TaskAnalytics = () => {
 
       {/* Dashboard Content */}
       <div className="p-4">
-        <div className="grid grid-cols-7 gap-3 mb-4">
-          <KpiCard
-            title="Total Sales"
-            value={kpis ? `$${Math.round(kpis.totalRevenue).toLocaleString()}` : "$0"}
-            trend="-74.6%"
-            trendDirection="down"
-            icon="sales"
-            color="green"
-            subtitle="Sum of all sales"
-            size="small"
-          />
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-screen py-12">
+            <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-gray-600">Loading analytics data...</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-7 gap-3 mb-4">
+              <KpiCard
+                title="Total Sales"
+                value={
+                  kpis
+                    ? `$${Math.round(kpis.totalRevenue).toLocaleString()}`
+                    : "$0"
+                }
+                trend="-74.6%"
+                trendDirection="down"
+                icon="sales"
+                color="green"
+                subtitle="Sum of all sales"
+                size="small"
+              />
 
-          <KpiCard
-            title="Average Sale Price"
-            value={kpis ? `$${kpis.avgPrice.toLocaleString()}` : "$0"}
-            trend="+0.2%"
-            trendDirection="up"
-            icon="average"
-            color="blue"
-            subtitle="Price comparison value"
-            size="small"
-          />
+              <KpiCard
+                title="Average Sale Price"
+                value={kpis ? `$${kpis.avgPrice.toLocaleString()}` : "$0"}
+                trend="+0.2%"
+                trendDirection="up"
+                icon="average"
+                color="blue"
+                subtitle="Price comparison value"
+                size="small"
+              />
 
-          <KpiCard
-            title="Sales Volume"
-            value={kpis ? kpis.totalSales.toLocaleString() : "0"}
-            icon="sales"
-            color="purple"
-            subtitle="Total cars sold"
-            size="small"
-          />
+              <KpiCard
+                title="Sales Volume"
+                value={kpis ? kpis.totalSales.toLocaleString() : "0"}
+                icon="sales"
+                color="purple"
+                subtitle="Total cars sold"
+                size="small"
+              />
 
-          <KpiCard
-            title="Top Selling Model"
-            value={kpis ? kpis.topModel.name : "None"}
-            subtitle="Most popular model"
-            icon="volume"
-            color="blue"
-            size="small"
-          />
+              <KpiCard
+                title="Top Selling Model"
+                value={kpis ? kpis.topModel.name : "None"}
+                subtitle="Most popular model"
+                icon="volume"
+                color="blue"
+                size="small"
+              />
 
-          <KpiCard
-            title="Monthly Growth"
-            value="+66.7%"
-            icon="calendar"
-            color="green"
-            subtitle="Last 30 days"
-            size="small"
-          />
+              <KpiCard
+                title="Monthly Growth"
+                value="+66.7%"
+                icon="calendar"
+                color="green"
+                subtitle="Last 30 days"
+                size="small"
+              />
 
-          <KpiCard
-            title="Quarterly Sales"
-            value="$47,225"
-            icon="price"
-            color="blue"
-            subtitle="Last 3 months"
-            size="small"
-          />
+              <KpiCard
+                title="Quarterly Sales"
+                value="$47,225"
+                icon="price"
+                color="blue"
+                subtitle="Last 3 months"
+                size="small"
+              />
 
-          <KpiCard
-            title="Sales by Make"
-            value="Toyota"
-            subtitle="Top performing brand"
-            icon="volume"
-            color="yellow"
-            size="small"
-          />
-        </div>
-
-        {/* Rest of your dashboard */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-          {/* Sales Trend Chart */}
-          <div className="bg-white p-4 rounded-md shadow-sm lg:col-span-2">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-800">
-                Sales - Real time
-              </h2>
-              <div className="flex items-center space-x-2">
-                <button className="text-xs text-gray-500 hover:text-indigo-600">
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="h-64">
-              <LineChart
-                data={timelineData}
-                startDate={startDate}
-                endDate={endDate}
-                colorPalette={colorPalette}
+              <KpiCard
+                title="Sales by Make"
+                value="Toyota"
+                subtitle="Top performing brand"
+                icon="volume"
+                color="yellow"
+                size="small"
               />
             </div>
-          </div>
 
-          {/* Sales by Category */}
-          <div className="bg-white p-4 rounded-md shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-800">
-                Sales by Category
-              </h2>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-gray-500">(hover)</span>
+            {/* Rest of your dashboard */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+              {/* Sales Trend Chart */}
+              <div className="bg-white p-4 rounded-md shadow-sm lg:col-span-2">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-medium text-gray-800">
+                    Sales - Real time
+                  </h2>
+                  <div className="flex items-center space-x-2">
+                    <button className="text-xs text-gray-500 hover:text-indigo-600">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="h-64">
+                  <LineChart
+                    data={timelineData}
+                    startDate={startDate}
+                    endDate={endDate}
+                    colorPalette={colorPalette}
+                  />
+                </div>
+              </div>
+
+              {/* Sales by Category */}
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-medium text-gray-800">
+                    Sales by Category
+                  </h2>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">(hover)</span>
+                  </div>
+                </div>
+                <div className="h-64">
+                  <StackedBarChart
+                    data={timelineData}
+                    selectedCompanies={selectedCompanies}
+                    colorPalette={colorPalette}
+                  />
+                </div>
               </div>
             </div>
-            <div className="h-64">
-              <StackedBarChart
-                data={timelineData}
-                selectedCompanies={selectedCompanies}
-                colorPalette={colorPalette}
-              />
-            </div>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-          {/* Company Distribution */}
-          <div className="bg-white p-4 rounded-md shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-800">
-                Revenue Distribution
-              </h2>
-              <div className="flex items-center space-x-2">
-                <button className="text-xs text-gray-500 hover:text-indigo-600">
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                    />
-                  </svg>
-                </button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+              {/* Company Distribution */}
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-medium text-gray-800">
+                    Revenue Distribution
+                  </h2>
+                  <div className="flex items-center space-x-2">
+                    <button className="text-xs text-gray-500 hover:text-indigo-600">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="h-64">
+                  <PieChart
+                    data={companyData}
+                    selectedCompanies={selectedCompanies}
+                    colorPalette={colorPalette}
+                  />
+                </div>
+              </div>
+
+              {/* Sales by Company */}
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-medium text-gray-800">
+                    Sales by Company
+                  </h2>
+                  <div className="flex items-center space-x-2">
+                    <button className="text-xs text-gray-500 hover:text-indigo-600">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="h-64">
+                  <BarChart
+                    data={companyData}
+                    selectedCompanies={selectedCompanies}
+                    colorPalette={colorPalette}
+                  />
+                </div>
+              </div>
+
+              {/* Key Metrics */}
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-medium text-gray-800">
+                    Key Metrics by Company
+                  </h2>
+                  <div className="flex items-center space-x-2">
+                    <button className="text-xs text-gray-500 hover:text-indigo-600">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="h-64 overflow-auto">
+                  <MetricsTable
+                    data={companyData}
+                    selectedCompanies={selectedCompanies}
+                    colorPalette={colorPalette}
+                  />
+                </div>
               </div>
             </div>
-            <div className="h-64">
-              <PieChart
-                data={companyData}
-                selectedCompanies={selectedCompanies}
-                colorPalette={colorPalette}
-              />
-            </div>
-          </div>
-
-          {/* Sales by Company */}
-          <div className="bg-white p-4 rounded-md shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-800">
-                Sales by Company
-              </h2>
-              <div className="flex items-center space-x-2">
-                <button className="text-xs text-gray-500 hover:text-indigo-600">
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="h-64">
-              <BarChart
-                data={companyData}
-                selectedCompanies={selectedCompanies}
-                colorPalette={colorPalette}
-              />
-            </div>
-          </div>
-
-          {/* Key Metrics */}
-          <div className="bg-white p-4 rounded-md shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-800">
-                Key Metrics by Company
-              </h2>
-              <div className="flex items-center space-x-2">
-                <button className="text-xs text-gray-500 hover:text-indigo-600">
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="h-64 overflow-auto">
-              <MetricsTable
-                data={companyData}
-                selectedCompanies={selectedCompanies}
-                colorPalette={colorPalette}
-              />
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
