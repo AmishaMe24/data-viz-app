@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
 import TaskList from './components/TaskList';
 import TaskForm from './components/TaskForm';
@@ -7,10 +7,9 @@ import TaskAnalytics from './components/TaskAnalytics';
 import TaskDetails from './components/TaskDetails';
 
 // Navigation link component with active state
-const NavLink = ({ to, children }) => {
-  const location = useLocation();
-  const isActive = location.pathname === to || 
-                  (to !== '/' && location.pathname.startsWith(to));
+const NavLink = ({ to, children, currentPath }) => {
+  const isActive = currentPath === to || 
+                  (to !== '/' && currentPath.startsWith(to));
   
   return (
     <Link 
@@ -26,10 +25,36 @@ const NavLink = ({ to, children }) => {
   );
 };
 
+// Main content wrapper with conditional padding
+const MainContent = ({ children, currentPath }) => {
+  const isAnalyticsView = currentPath.includes('/analytics');
+  
+  return (
+    <main className={`mx-auto ${isAnalyticsView ? 'p-0' : 'py-6 sm:px-6 lg:px-8'}`}>
+      <div className={isAnalyticsView ? '' : 'px-4 sm:px-0'}>
+        {children}
+      </div>
+    </main>
+  );
+};
+
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <AppContent />
+    </Router>
+  );
+}
+
+// Separate component to use router hooks
+function AppContent() {
+  // Get current location using window.location instead of useLocation
+  const currentPath = window.location.pathname;
+  const isAnalyticsView = currentPath.includes('/analytics');
+  
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {!isAnalyticsView && (
         <nav className="bg-white shadow-sm border-b border-gray-200">
           <div className="mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
@@ -46,8 +71,8 @@ function App() {
                 </div>
                 
                 <div className="hidden sm:ml-8 sm:flex sm:items-center sm:space-x-2">
-                  <NavLink to="/">Dashboard</NavLink>
-                  <NavLink to="/tasks/new">New Task</NavLink>
+                  <NavLink to="/" currentPath={currentPath}>Dashboard</NavLink>
+                  <NavLink to="/tasks/new" currentPath={currentPath}>New Task</NavLink>
                 </div>
               </div>
               
@@ -61,18 +86,18 @@ function App() {
             </div>
           </div>
         </nav>
+      )}
 
-        <main className="mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 sm:px-0">
-            <Routes>
-              <Route path="/" element={<TaskList />} />
-              <Route path="/tasks/new" element={<TaskForm />} />
-              <Route path="/tasks/:id" element={<TaskDetails />} />
-              <Route path="/tasks/:id/analytics" element={<TaskAnalytics />} />
-            </Routes>
-          </div>
-        </main>
-        
+      <MainContent currentPath={currentPath}>
+        <Routes>
+          <Route path="/" element={<TaskList />} />
+          <Route path="/tasks/new" element={<TaskForm />} />
+          <Route path="/tasks/:id" element={<TaskDetails />} />
+          <Route path="/tasks/:id/analytics" element={<TaskAnalytics />} />
+        </Routes>
+      </MainContent>
+      
+      {!isAnalyticsView && (
         <footer className="bg-white border-t border-gray-200 py-4">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center text-sm text-gray-500">
@@ -80,8 +105,8 @@ function App() {
             </div>
           </div>
         </footer>
-      </div>
-    </Router>
+      )}
+    </div>
   );
 }
 

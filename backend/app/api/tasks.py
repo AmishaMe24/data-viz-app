@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db.database import get_db
@@ -65,23 +65,23 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 
 @router.get("/tasks/{task_id}/records", response_model=List[RecordResponse])
 def get_task_records(
-    task_id: int, 
-    companies: Optional[List[str]] = Query(None),  # Use Query to properly handle arrays
+    task_id: int,
+    companies: List[str] = Query(None),  # Use Query with default None to handle multiple values
     model: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    query = db.query(Record).filter(Record.task_id == task_id)
     print(f"Companies filter: {companies}")
     
-    # Handle multiple companies filter
+    # Start building the query
+    query = db.query(Record).filter(Record.task_id == task_id)
+    
+    # Apply company filter if provided
     if companies:
-        # Make sure companies is a list
-        if isinstance(companies, str):
-            companies = [companies]
         query = query.filter(Record.company.in_(companies))
     
+    # Rest of the filtering logic remains the same
     if model:
         query = query.filter(Record.model == model)
     if start_date:
@@ -107,7 +107,9 @@ def get_task_records(
             except ValueError:
                 pass
     
-    return query.all()
+    records = query.all()
+    print(f"Filtered records count: {len(records)}")
+    return records
 
 @router.get("/tasks/{task_id}/analytics/companies")
 def get_company_analytics(task_id: int, db: Session = Depends(get_db)):

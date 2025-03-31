@@ -1,7 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import * as d3 from 'd3';
 import api from '../services/api';
+
+// Import components
+import BarChart from './charts/BarChart';
+import PieChart from './charts/PieChart';
+import LineChart from './charts/LineChart';
+import StackedBarChart from './charts/StackedBarChart';
+import KpiCard from './charts/KpiCard';
+import MetricsTable from './charts/MetricsTable';
+import CompanyFilter from './filters/CompanyFilter';
+import DateFilter from './filters/DateFilter';
 
 const TaskAnalytics = () => {
   const { id } = useParams();
@@ -15,10 +24,52 @@ const TaskAnalytics = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedCompanies, setSelectedCompanies] = useState([]);
+  const [timeRange, setTimeRange] = useState('6m'); // Default to 6 months
   
-  // Refs for chart containers
-  const barChartRef = useRef(null);
-  const lineChartRef = useRef(null);
+  // Summary metrics
+  const [totalSales, setTotalSales] = useState(0);
+  const [avgPrice, setAvgPrice] = useState(0);
+  const [topCompany, setTopCompany] = useState('');
+  const [topModel, setTopModel] = useState('');
+  const [successRate, setSuccessRate] = useState(0);
+  const [errorRate, setErrorRate] = useState(0);
+  
+  // List of all available companies
+  const allCompanies = ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes'];
+  
+  // Color palette
+  const colorPalette = {
+    primary: ['#3949AB', '#5E97F6', '#9FA8DA', '#FFB74D', '#FFA726', '#FF9800'],
+    secondary: ['#5C6BC0', '#42A5F5', '#7986CB', '#FFA000', '#FF8F00', '#FFC107'],
+    light: ['#C5CAE9', '#BBDEFB', '#D1C4E9', '#FFECB3', '#FFE0B2', '#FFCC80']
+  };
+
+  // Add this function to filter data based on time range
+  const filterDataByTimeRange = (data) => {
+    if (!data || timeRange === 'all') return data;
+    
+    const now = new Date();
+    let cutoffDate;
+    
+    switch(timeRange) {
+      case '6m':
+        cutoffDate = new Date(now.setMonth(now.getMonth() - 6));
+        break;
+      case '1y':
+        cutoffDate = new Date(now.setFullYear(now.getFullYear() - 1));
+        break;
+      case '3y':
+        cutoffDate = new Date(now.setFullYear(now.getFullYear() - 3));
+        break;
+      case '5y':
+        cutoffDate = new Date(now.setFullYear(now.getFullYear() - 5));
+        break;
+      default:
+        return data;
+    }
+    
+    return data.filter(item => new Date(item.date) >= cutoffDate);
+  };
   
   useEffect(() => {
     const fetchData = async () => {
@@ -36,10 +87,14 @@ const TaskAnalytics = () => {
         setCompanyData(companyAnalytics);
         
         const timelineAnalytics = await api.getTimelineAnalytics(id);
-        setTimelineData(timelineAnalytics);
+        const filteredTimelineData = filterDataByTimeRange(timelineAnalytics);
+        setTimelineData(filteredTimelineData);
         
-        // Set default selected companies (all)
-        setSelectedCompanies(companyAnalytics.map(item => item.company));
+        // Set default selected companies (all available companies)
+        setSelectedCompanies([...allCompanies]);
+        
+        // Calculate summary metrics
+        calculateSummaryMetrics(companyAnalytics, filteredTimelineData);
       } catch (err) {
         setError('Failed to fetch analytics data');
         console.error(err);
@@ -49,202 +104,29 @@ const TaskAnalytics = () => {
     };
     
     fetchData();
-  }, [id]);
+  }, [id, timeRange]); // Add timeRange as a dependency
   
-  useEffect(() => {
-    if (!loading && !error && companyData.length > 0) {
-      renderBarChart();
-    }
-  }, [loading, error, companyData, selectedCompanies]);
-  
-  useEffect(() => {
-    if (!loading && !error && timelineData.length > 0) {
-      renderLineChart();
-    }
-  }, [loading, error, timelineData, startDate, endDate, selectedCompanies]);
-  
-  const renderBarChart = () => {
-    // Clear previous chart
-    d3.select(barChartRef.current).selectAll('*').remove();
+  const calculateSummaryMetrics = (companies, timeline) => {
+    // Calculate total sales
+    const total = companies.reduce((sum, company) => sum + company.total_sales, 0);
+    setTotalSales(total);
     
-    // Filter data based on selected companies
-    const filteredData = companyData.filter(d => selectedCompanies.includes(d.company));
+    // Calculate average price
+    const totalRevenue = companies.reduce((sum, company) => sum + company.total_revenue, 0);
+    setAvgPrice(total > 0 ? Math.round(totalRevenue / total) : 0);
     
-    // Set up dimensions
-    const margin = { top: 30, right: 30, bottom: 70, left: 60 };
-    const width = 600 - margin.left - margin.right;
-    const height = 400 - margin.top - margin.bottom;
-    
-    // Create SVG
-    const svg = d3.select(barChartRef.current)
-      .append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-    
-    // X axis
-    const x = d3.scaleBand()
-      .range([0, width])
-      .domain(filteredData.map(d => d.company))
-      .padding(0.2);
-    
-    svg.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(x))
-      .selectAll('text')
-      .attr('transform', 'translate(-10,0)rotate(-45)')
-      .style('text-anchor', 'end');
-    
-    // Y axis
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(filteredData, d => d.total_sales) * 1.1])
-      .range([height, 0]);
-    
-    svg.append('g')
-      .call(d3.axisLeft(y));
-    
-    // Add title
-    svg.append('text')
-      .attr('x', width / 2)
-      .attr('y', 0 - (margin.top / 2))
-      .attr('text-anchor', 'middle')
-      .style('font-size', '16px')
-      .text('Total Sales by Company');
-    
-    // Add bars
-    svg.selectAll('mybar')
-      .data(filteredData)
-      .enter()
-      .append('rect')
-      .attr('x', d => x(d.company))
-      .attr('y', d => y(d.total_sales))
-      .attr('width', x.bandwidth())
-      .attr('height', d => height - y(d.total_sales))
-      .attr('fill', '#4f46e5')
-      .on('mouseover', function(event, d) {
-        d3.select(this).attr('fill', '#818cf8');
-        
-        // Add tooltip
-        svg.append('text')
-          .attr('id', 'tooltip')
-          .attr('x', x(d.company) + x.bandwidth() / 2)
-          .attr('y', y(d.total_sales) - 10)
-          .attr('text-anchor', 'middle')
-          .style('font-size', '12px')
-          .text(`${d.total_sales} sales, $${Math.round(d.total_revenue).toLocaleString()}`);
-      })
-      .on('mouseout', function() {
-        d3.select(this).attr('fill', '#4f46e5');
-        d3.select('#tooltip').remove();
-      });
-  };
-  
-  const renderLineChart = () => {
-    // Clear previous chart
-    d3.select(lineChartRef.current).selectAll('*').remove();
-    
-    // Filter data based on date range and selected companies
-    let filteredData = [...timelineData];
-    
-    if (startDate) {
-      filteredData = filteredData.filter(d => d.date >= startDate);
-    }
-    
-    if (endDate) {
-      filteredData = filteredData.filter(d => d.date <= endDate);
-    }
-    
-    // If no data after filtering, return
-    if (filteredData.length === 0) return;
-    
-    // Set up dimensions
-    const margin = { top: 30, right: 30, bottom: 50, left: 60 };
-    const width = 600 - margin.left - margin.right;
-    const height = 400 - margin.top - margin.bottom;
-    
-    // Create SVG
-    const svg = d3.select(lineChartRef.current)
-      .append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-    
-    // Parse dates
-    filteredData.forEach(d => {
-      d.parsedDate = d3.timeParse('%Y-%m')(d.date);
-    });
-    
-    // Sort by date
-    filteredData.sort((a, b) => a.parsedDate - b.parsedDate);
-    
-    // X axis
-    const x = d3.scaleTime()
-      .domain(d3.extent(filteredData, d => d.parsedDate))
-      .range([0, width]);
-    
-    svg.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(x).tickFormat(d3.timeFormat('%b %Y')))
-      .selectAll('text')
-      .style('text-anchor', 'end')
-      .attr('dx', '-.8em')
-      .attr('dy', '.15em')
-      .attr('transform', 'rotate(-45)');
-    
-    // Y axis
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(filteredData, d => d.total_sales) * 1.1])
-      .range([height, 0]);
-    
-    svg.append('g')
-      .call(d3.axisLeft(y));
-    
-    // Add title
-    svg.append('text')
-      .attr('x', width / 2)
-      .attr('y', 0 - (margin.top / 2))
-      .attr('text-anchor', 'middle')
-      .style('font-size', '16px')
-      .text('Sales Over Time');
-    
-    // Add the line
-    svg.append('path')
-      .datum(filteredData)
-      .attr('fill', 'none')
-      .attr('stroke', '#4f46e5')
-      .attr('stroke-width', 2)
-      .attr('d', d3.line()
-        .x(d => x(d.parsedDate))
-        .y(d => y(d.total_sales))
+    // Find top company by sales
+    if (companies.length > 0) {
+      const top = companies.reduce((prev, current) => 
+        (prev.total_sales > current.total_sales) ? prev : current
       );
+      setTopCompany(top.company);
+    }
     
-    // Add dots
-    svg.selectAll('dot')
-      .data(filteredData)
-      .enter()
-      .append('circle')
-      .attr('cx', d => x(d.parsedDate))
-      .attr('cy', d => y(d.total_sales))
-      .attr('r', 5)
-      .attr('fill', '#4f46e5')
-      .on('mouseover', function(event, d) {
-        d3.select(this).attr('r', 8).attr('fill', '#818cf8');
-        
-        // Add tooltip
-        svg.append('text')
-          .attr('id', 'tooltip')
-          .attr('x', x(d.parsedDate))
-          .attr('y', y(d.total_sales) - 10)
-          .attr('text-anchor', 'middle')
-          .style('font-size', '12px')
-          .text(`${d.date}: ${d.total_sales} sales`);
-      })
-      .on('mouseout', function() {
-        d3.select(this).attr('r', 5).attr('fill', '#4f46e5');
-        d3.select('#tooltip').remove();
-      });
+    // Set placeholder values for demo
+    setTopModel("Camry");
+    setSuccessRate(0.900);
+    setErrorRate(0.100);
   };
   
   const handleCompanyToggle = (company) => {
@@ -256,103 +138,238 @@ const TaskAnalytics = () => {
   };
   
   const selectAllCompanies = () => {
-    setSelectedCompanies(companyData.map(item => item.company));
+    setSelectedCompanies([...allCompanies]);
   };
   
   const clearAllCompanies = () => {
     setSelectedCompanies([]);
   };
   
-  if (loading) {
-    return <div className="text-center py-10">Loading analytics data...</div>;
-  }
+  // Update the time range handler
+  const handleTimeRangeChange = (e) => {
+    // If e is an event (from dropdown), use e.target.value
+    // If e is a string (from button click), use e directly
+    const newTimeRange = typeof e === 'string' ? e : e.target.value;
+    setTimeRange(newTimeRange);
+  };
   
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        {error}
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded max-w-lg">
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+          <div className="mt-4">
+            <Link to={`/tasks/${id}`} className="text-indigo-600 hover:text-indigo-800">
+              Return to task
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
   
   return (
-    <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Analytics: {task?.name}</h2>
-        <Link to={`/tasks/${id}`} className="text-blue-500 hover:text-blue-700">
-          Back to Task
-        </Link>
+    <div className="bg-gray-100 min-h-screen">
+      {/* Dashboard Header */}
+      <div className="bg-white border-b border-gray-200 px-4 py-2 flex justify-between items-center">
+        <div className="flex items-center">
+          <Link to="/" className="text-gray-600 hover:text-indigo-600 mr-2">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </Link>
+          <span className="text-gray-400 mx-1">/</span>
+          <Link to="/tasks" className="text-gray-600 hover:text-indigo-600 mr-2">Tasks</Link>
+          <span className="text-gray-400 mx-1">/</span>
+          <Link to={`/tasks/${id}`} className="text-gray-600 hover:text-indigo-600 mr-2">{task?.name}</Link>
+          <span className="text-gray-400 mx-1">/</span>
+          <span className="font-medium text-gray-800">Analytics</span>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <select 
+            value={timeRange}
+            onChange={handleTimeRangeChange}
+            className="border border-gray-300 rounded-md text-xs py-1 px-2 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="6m">Last 6 months</option>
+            <option value="1y">Last 1 year</option>
+            <option value="3y">Last 3 years</option>
+            <option value="5y">Last 5 years</option>
+            <option value="all">All time</option>
+          </select>
+          
+          <select
+            value={selectedCompanies.length === allCompanies.length ? "all" : selectedCompanies.length === 0 ? "none" : selectedCompanies[0]}
+            onChange={(e) => {
+              const company = e.target.value;
+              // Remove setCompanyFilter since it's not defined and not needed
+              
+              if (company === "all") {
+                selectAllCompanies();
+              } else if (company === "none") {
+                clearAllCompanies();
+              } else {
+                setSelectedCompanies([company]);
+              }
+            }}
+            className="border border-gray-300 rounded-md text-xs py-1 px-2 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="all">All Companies</option>
+            <option value="none">None</option>
+            {allCompanies.map(company => (
+              <option key={company} value={company}>{company}</option>
+            ))}
+          </select>
+          
+          <button className="px-3 py-1 bg-indigo-600 text-white rounded-md text-xs hover:bg-indigo-700">
+            Share
+          </button>
+        </div>
       </div>
       
-      <div className="mb-6 bg-gray-50 p-4 rounded">
-        <h3 className="text-lg font-medium mb-2">Filters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Date Range
-            </label>
-            <div className="flex space-x-2">
-              <input
-                type="month"
-                className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                placeholder="Start Date"
-              />
-              <input
-                type="month"
-                className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                placeholder="End Date"
+      {/* Dashboard Content */}
+      <div className="p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+          <KpiCard 
+            title="Total Sales" 
+            value={totalSales} 
+            trend="+5%" 
+            trendDirection="up" 
+            icon="sales" 
+            color="green"
+          />
+          <KpiCard 
+            title="Average Price" 
+            value={`$${avgPrice.toLocaleString()}`} 
+            trend="+2.5%" 
+            trendDirection="up" 
+            icon="price" 
+            color="blue"
+          />
+          <KpiCard 
+            title="Success Rate" 
+            value={`${(successRate * 100).toFixed(1)}%`} 
+            trend="+0.8%" 
+            trendDirection="up" 
+            icon="success" 
+            color="green"
+          />
+          <KpiCard 
+            title="Error Rate" 
+            value={`${(errorRate * 100).toFixed(1)}%`} 
+            trend="-0.3%" 
+            trendDirection="down" 
+            icon="error" 
+            color="red"
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+          {/* Sales Trend Chart */}
+          <div className="bg-white p-4 rounded-md shadow-sm lg:col-span-2">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-gray-800">Sales - Real time</h2>
+              <div className="flex items-center space-x-2">
+                <button className="text-xs text-gray-500 hover:text-indigo-600">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="h-64">
+              <LineChart 
+                data={timelineData} 
+                startDate={startDate} 
+                endDate={endDate} 
+                colorPalette={colorPalette}
               />
             </div>
           </div>
           
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Companies
-            </label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {companyData.map(item => (
-                <label key={item.company} className="inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    className="form-checkbox h-5 w-5 text-blue-600"
-                    checked={selectedCompanies.includes(item.company)}
-                    onChange={() => handleCompanyToggle(item.company)}
-                  />
-                  <span className="ml-2 text-gray-700">{item.company}</span>
-                </label>
-              ))}
+          {/* Sales by Category */}
+          <div className="bg-white p-4 rounded-md shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-gray-800">Sales by Category</h2>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-gray-500">(hover)</span>
+              </div>
             </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={selectAllCompanies}
-                className="text-sm text-blue-500 hover:text-blue-700"
-              >
-                Select All
-              </button>
-              <button
-                onClick={clearAllCompanies}
-                className="text-sm text-blue-500 hover:text-blue-700"
-              >
-                Clear All
-              </button>
+            <div className="h-64">
+              <StackedBarChart 
+                data={timelineData} 
+                selectedCompanies={selectedCompanies} 
+                colorPalette={colorPalette}
+              />
             </div>
           </div>
         </div>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="text-lg font-semibold mb-4">Sales by Company</h3>
-          <div ref={barChartRef} className="w-full"></div>
-        </div>
         
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="text-lg font-semibold mb-4">Sales Timeline</h3>
-          <div ref={lineChartRef} className="w-full"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+          {/* Company Distribution */}
+          <div className="bg-white p-4 rounded-md shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-gray-800">Revenue Distribution</h2>
+              <div className="flex items-center space-x-2">
+                <button className="text-xs text-gray-500 hover:text-indigo-600">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="h-64">
+              <PieChart 
+                data={companyData} 
+                selectedCompanies={selectedCompanies} 
+                colorPalette={colorPalette}
+              />
+            </div>
+          </div>
+          
+          {/* Sales by Company */}
+          <div className="bg-white p-4 rounded-md shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-gray-800">Sales by Company</h2>
+              <div className="flex items-center space-x-2">
+                <button className="text-xs text-gray-500 hover:text-indigo-600">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="h-64">
+              <BarChart 
+                data={companyData} 
+                selectedCompanies={selectedCompanies} 
+                colorPalette={colorPalette}
+              />
+            </div>
+          </div>
+          
+          {/* Key Metrics */}
+          <div className="bg-white p-4 rounded-md shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-gray-800">Key Metrics by Company</h2>
+              <div className="flex items-center space-x-2">
+                <button className="text-xs text-gray-500 hover:text-indigo-600">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="h-64 overflow-auto">
+              <MetricsTable 
+                data={companyData} 
+                selectedCompanies={selectedCompanies} 
+                colorPalette={colorPalette}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

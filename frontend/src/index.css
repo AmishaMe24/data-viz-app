@@ -9,9 +9,61 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Chart container styles */
+.chart-container {
+  width: 100%;
+  height: 250px;
+  position: relative;
+  overflow: visible;
+}
+
+/* Make sure SVG elements stay within their containers */
+svg {
+  max-width: 100%;
+  display: block;
+}
+
+/* Fix for timeline chart */
+.analytics-content {
+  overflow: visible;
+  padding-bottom: 20px;
+}
+
+/* Ensure proper spacing */
+.grid {
+  margin-bottom: 1rem;
+}
+
+/* Root layout */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+}
+
+footer {
+  margin-top: auto;
+  padding: 1rem 0;
+}
+
+.analytics-content {
+  max-height: 85vh;
+}
+
+/* Adjust chart heights */
+.chart-container {
+  height: 250px;
 }

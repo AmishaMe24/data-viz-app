@@ -7,7 +7,6 @@ const TaskRecords = ({ taskId }) => {
   const [error, setError] = useState('');
 
   // Filters
-  const [company, setCompany] = useState('');
   const [model, setModel] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -15,31 +14,16 @@ const TaskRecords = ({ taskId }) => {
   // Companies for checkbox filtering
   const [selectedCompanies, setSelectedCompanies] = useState([]);
   const companies = ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes'];
+  
+  // Active filters that are currently applied
+  const [activeFilters, setActiveFilters] = useState({});
 
+  // Fetch records only when taskId or activeFilters change
   useEffect(() => {
     const fetchRecords = async () => {
       try {
         setLoading(true);
-        // Fetch records with any applied filters
-        const filters = {};
-        if (model) filters.model = model;
-        if (startDate) filters.start_date = startDate;
-        if (endDate) filters.end_date = endDate;
-        
-        // Only use selectedCompanies for filtering
-        if (selectedCompanies.length > 0) {
-          // Change from filters.companies to filters.companies[]
-          // This ensures each company is sent as a separate query parameter
-          selectedCompanies.forEach(company => {
-            if (!filters.companies) filters.companies = [];
-            filters.companies.push(company);
-          });
-          console.log('Applying company filters:', selectedCompanies);
-        }
-
-        console.log('Sending filters to API:', filters);
-        const recordsData = await api.getTaskRecords(taskId, filters);
-        console.log('Received records:', recordsData.length);
+        const recordsData = await api.getTaskRecords(taskId, activeFilters);
         setRecords(recordsData);
       } catch (err) {
         setError('Failed to fetch records');
@@ -49,39 +33,38 @@ const TaskRecords = ({ taskId }) => {
       }
     };
 
-    // Remove the delay as it's not necessary and could cause issues
     fetchRecords();
-  }, [taskId, model, startDate, endDate, selectedCompanies]);
+  }, [taskId, activeFilters]);
 
-  // Remove the company state since we're using selectedCompanies instead
   const handleCompanyToggle = (companyName) => {
-    setSelectedCompanies(prev => {
-      const newSelection = prev.includes(companyName) 
+    setSelectedCompanies(prev => 
+      prev.includes(companyName) 
         ? prev.filter(c => c !== companyName)
-        : [...prev, companyName];
-      
-      console.log('Updated selected companies:', newSelection);
-      return newSelection;
-    });
+        : [...prev, companyName]
+    );
   };
 
   const handleFilter = (e) => {
     e.preventDefault();
-    // The useEffect will trigger a refetch with the new filters
-    console.log('Filter form submitted with:', {
-      model,
-      startDate,
-      endDate,
-      selectedCompanies
-    });
+    
+    // Create new filters object
+    const newFilters = {};
+    if (model) newFilters.model = model;
+    if (startDate) newFilters.start_date = startDate;
+    if (endDate) newFilters.end_date = endDate;
+    if (selectedCompanies.length > 0) newFilters.companies = selectedCompanies;
+    
+    // Apply the filters
+    setActiveFilters(newFilters);
+    console.log('Applying filters:', newFilters);
   };
 
   const clearFilters = () => {
-    setCompany('');
     setModel('');
     setStartDate('');
     setEndDate('');
     setSelectedCompanies([]);
+    setActiveFilters({});
   };
 
   if (loading) {
