@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import TaskList from './components/TaskList';
 import TaskForm from './components/TaskForm';
@@ -30,8 +30,8 @@ const MainContent = ({ children, currentPath }) => {
   const isAnalyticsView = currentPath.includes('/analytics');
   
   return (
-    <main className={`mx-auto ${isAnalyticsView ? 'p-0' : 'py-6 sm:px-6 lg:px-8'}`}>
-      <div className={isAnalyticsView ? '' : 'px-4 sm:px-0'}>
+    <main className={`w-full mx-auto flex-grow ${isAnalyticsView ? 'p-0' : 'py-6 sm:px-6 lg:px-8'}`}>
+      <div className={`${isAnalyticsView ? 'w-full' : 'px-4 sm:px-0'}`}>
         {children}
       </div>
     </main>
@@ -41,20 +41,31 @@ const MainContent = ({ children, currentPath }) => {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <Routes>
+        <Route path="*" element={<AppContent />} />
+      </Routes>
     </Router>
   );
 }
 
 // Separate component to use router hooks
 function AppContent() {
-  // Get current location using window.location instead of useLocation
-  const currentPath = window.location.pathname;
+  // Use React Router's useLocation hook instead of window.location
+  const location = useLocation();
+  const currentPath = location.pathname;
   const isAnalyticsView = currentPath.includes('/analytics');
   
+  // Use state for controlling nav visibility
+  const [showNav, setShowNav] = useState(!isAnalyticsView);
+  
+  // Update immediately when path changes
+  useEffect(() => {
+    setShowNav(!isAnalyticsView);
+  }, [isAnalyticsView, currentPath]);
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      {!isAnalyticsView && (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {showNav && (
         <nav className="bg-white shadow-sm border-b border-gray-200">
           <div className="mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
@@ -97,8 +108,8 @@ function AppContent() {
         </Routes>
       </MainContent>
       
-      {!isAnalyticsView && (
-        <footer className="bg-white border-t border-gray-200 py-4">
+      {showNav && (
+        <footer className="bg-white border-t border-gray-200 py-4 mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center text-sm text-gray-500">
               <div>© 2025 TaskFlow. All rights reserved.</div>

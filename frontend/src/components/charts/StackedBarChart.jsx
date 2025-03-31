@@ -12,11 +12,7 @@ const StackedBarChart = ({ data, selectedCompanies, colorPalette }) => {
     
     // Clear previous chart
     d3.select(svgRef.current).selectAll('*').remove();
-    
-    // Debug data
-    console.log("Data for stacked chart:", data);
-    console.log("Selected companies:", selectedCompanies);
-    
+   
     // Create a simpler dataset for demonstration
     // This will create a bar for each company with their total sales
     const simplifiedData = selectedCompanies.map(company => {
@@ -28,8 +24,6 @@ const StackedBarChart = ({ data, selectedCompanies, colorPalette }) => {
         sales: totalSales || Math.floor(Math.random() * 100) + 20 // Fallback to random data if no sales
       };
     });
-    
-    console.log("Simplified data:", simplifiedData);
     
     // Get container dimensions
     const containerWidth = containerRef.current.clientWidth;

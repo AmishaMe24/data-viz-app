@@ -1,6 +1,6 @@
 import React from 'react';
 
-const KpiCard = ({ title, value, trend, trendDirection, icon, color }) => {
+const KpiCard = ({ title, value, trend, trendDirection, icon, color, subtitle, size = 'default' }) => {
   const getIconComponent = () => {
     switch (icon) {
       case 'sales':
@@ -27,6 +27,24 @@ const KpiCard = ({ title, value, trend, trendDirection, icon, color }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
+      case 'volume':
+        return (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+          </svg>
+        );
+      case 'average':
+        return (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+          </svg>
+        );
+      case 'calendar':
+        return (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        );
       default:
         return (
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -46,6 +64,10 @@ const KpiCard = ({ title, value, trend, trendDirection, icon, color }) => {
         return 'text-blue-600 bg-blue-100';
       case 'yellow':
         return 'text-yellow-600 bg-yellow-100';
+      case 'purple':
+        return 'text-purple-600 bg-purple-100';
+      case 'indigo':
+        return 'text-indigo-600 bg-indigo-100';
       default:
         return 'text-indigo-600 bg-indigo-100';
     }
@@ -71,20 +93,59 @@ const KpiCard = ({ title, value, trend, trendDirection, icon, color }) => {
       );
   };
   
+  const getSizeClasses = () => {
+    switch (size) {
+      case 'small':
+        return {
+          container: 'p-3',
+          title: 'text-xs',
+          value: 'text-xl',
+          trend: 'text-xs',
+          icon: 'h-5 w-5',
+          iconContainer: 'p-1.5'
+        };
+      case 'large':
+        return {
+          container: 'p-5',
+          title: 'text-md',
+          value: 'text-3xl',
+          trend: 'text-sm',
+          icon: 'h-7 w-7',
+          iconContainer: 'p-2.5'
+        };
+      default:
+        return {
+          container: 'p-4',
+          title: 'text-sm',
+          value: 'text-2xl',
+          trend: 'text-xs',
+          icon: 'h-6 w-6',
+          iconContainer: 'p-2'
+        };
+    }
+  };
+  
+  const sizeClasses = getSizeClasses();
+  
   return (
-    <div className="bg-white p-4 rounded-md shadow-sm">
+    <div className={`bg-white rounded-md shadow-sm ${sizeClasses.container}`}>
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+          <h3 className={`font-medium text-gray-500 ${sizeClasses.title}`}>{title}</h3>
           <div className="mt-1 flex items-baseline">
-            <p className="text-2xl font-semibold text-gray-900">{value}</p>
-            <p className={`ml-2 flex items-center text-xs font-medium ${getTrendClasses()}`}>
-              <span className="mr-0.5">{getTrendIcon()}</span>
-              {trend}
-            </p>
+            <p className={`font-semibold text-gray-900 ${sizeClasses.value}`}>{value}</p>
+            {trend && (
+              <p className={`ml-2 flex items-center font-medium ${sizeClasses.trend} ${getTrendClasses()}`}>
+                <span className="mr-0.5">{getTrendIcon()}</span>
+                {trend}
+              </p>
+            )}
           </div>
+          {subtitle && (
+            <p className="mt-1 text-xs text-gray-500">{subtitle}</p>
+          )}
         </div>
-        <div className={`p-2 rounded-md ${getColorClasses()}`}>
+        <div className={`rounded-md ${getColorClasses()} ${sizeClasses.iconContainer}`}>
           {getIconComponent()}
         </div>
       </div>
