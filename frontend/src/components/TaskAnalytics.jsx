@@ -313,7 +313,7 @@ const TaskAnalytics = () => {
   const getStartDateFromTimeRange = (range) => {
     const now = new Date();
     let startDate;
-    
+
     switch (range) {
       case "6m":
         startDate = new Date(now);
@@ -334,8 +334,8 @@ const TaskAnalytics = () => {
       default:
         return null;
     }
-    
-    return startDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+
+    return startDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   };
 
   return (
@@ -539,24 +539,42 @@ const TaskAnalytics = () => {
                     data={timelineData}
                     selectedCompanies={selectedCompanies}
                     colorPalette={colorPalette}
-                    startDate={timeRange === "all" ? null : getStartDateFromTimeRange(timeRange)}
-                    endDate={new Date().toISOString().split('T')[0]}
+                    startDate={
+                      timeRange === "all"
+                        ? null
+                        : getStartDateFromTimeRange(timeRange)
+                    }
+                    endDate={new Date().toISOString().split("T")[0]}
                   />
                 </div>
               </div>
 
-              {/* Sales by Category */}
+              {/* Sales by Company */}
               <div className="bg-white p-4 rounded-md shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-medium text-gray-800">
-                    Sales by Category
+                    Sales by Company
                   </h2>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-500">(hover)</span>
+                    <button className="text-xs text-gray-500 hover:text-indigo-600">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                        />
+                      </svg>
+                    </button>
                   </div>
                 </div>
                 <div className="h-64">
-                  <StackedBarChart
+                  <BarChart
                     data={timelineData}
                     selectedCompanies={selectedCompanies}
                     colorPalette={colorPalette}
@@ -599,32 +617,18 @@ const TaskAnalytics = () => {
                 </div>
               </div>
 
-              {/* Sales by Company */}
+              {/* Sales by Category */}
               <div className="bg-white p-4 rounded-md shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-medium text-gray-800">
-                    Sales by Company
+                    Sales by Category
                   </h2>
                   <div className="flex items-center space-x-2">
-                    <button className="text-xs text-gray-500 hover:text-indigo-600">
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                        />
-                      </svg>
-                    </button>
+                    <span className="text-xs text-gray-500">(hover)</span>
                   </div>
                 </div>
                 <div className="h-64">
-                  <BarChart
+                  <StackedBarChart
                     data={timelineData}
                     selectedCompanies={selectedCompanies}
                     colorPalette={colorPalette}
