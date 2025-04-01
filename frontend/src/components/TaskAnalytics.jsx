@@ -6,7 +6,7 @@ import api from "../services/api";
 import BarChart from "./charts/BarChart";
 import PieChart from "./charts/PieChart";
 import LineChart from "./charts/LineChart";
-import StackedBarChart from "./charts/StackedBarChart";
+import BoxPlot from "./charts/BoxPlot";
 import KpiCard from "./charts/KpiCard";
 import MetricsTable from "./charts/MetricsTable";
 import CompanyFilter from "./filters/CompanyFilter";
@@ -617,18 +617,14 @@ const TaskAnalytics = () => {
                 </div>
               </div>
 
-              {/* Sales by Category */}
               <div className="bg-white p-4 rounded-md shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-medium text-gray-800">
-                    Sales by Category
+                    Price Distribution by Make/Model
                   </h2>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-500">(hover)</span>
-                  </div>
                 </div>
                 <div className="h-64">
-                  <StackedBarChart
+                  <BoxPlot
                     data={timelineData}
                     selectedCompanies={selectedCompanies}
                     colorPalette={colorPalette}
