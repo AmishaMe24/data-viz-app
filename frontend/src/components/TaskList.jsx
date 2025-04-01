@@ -8,12 +8,42 @@ const TaskList = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [tasksPerPage] = useState(10);
+  const [totalTasks, setTotalTasks] = useState(0);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'in_progress':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'failed':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
 
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const data = await api.getTasks();
-        setTasks(data);
+        setLoading(true);
+        const skip = (statusFilter === 'all' && searchTerm === '') 
+          ? (currentPage - 1) * tasksPerPage 
+          : 0;
+        
+        const limit = (statusFilter === 'all' && searchTerm === '') 
+          ? tasksPerPage 
+          : 1000;
+        
+        const response = await api.getTasks(skip, limit);
+        
+        setTasks(response.items);
+        setTotalTasks(response.total);
       } catch (err) {
         setError('Failed to fetch tasks');
         console.error(err);
@@ -23,28 +53,86 @@ const TaskList = () => {
     };
 
     fetchTasks();
-    
-    const interval = setInterval(fetchTasks, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const filteredTasks = tasks
-    .filter(task => task.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter(task => statusFilter === 'all' || task.status === statusFilter);
-
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'completed': return 'bg-green-100 text-green-800 border-green-300';
-      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'failed': return 'bg-red-100 text-red-800 border-red-300';
-      default: return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-    }
-  };
+  }, [currentPage, statusFilter, searchTerm, tasksPerPage]);
 
   const statusCounts = tasks.reduce((acc, task) => {
     acc[task.status] = (acc[task.status] || 0) + 1;
     return acc;
   }, {});
+
+  const filteredTasks = tasks
+    .filter(task => task.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(task => statusFilter === 'all' || task.status === statusFilter);
+  
+  const paginatedTasks = (statusFilter !== 'all' || searchTerm !== '')
+    ? filteredTasks.slice((currentPage - 1) * tasksPerPage, currentPage * tasksPerPage)
+    : filteredTasks;
+  
+  const totalPages = statusFilter !== 'all' || searchTerm !== '' 
+    ? Math.max(1, Math.ceil(filteredTasks.length / tasksPerPage))
+    : Math.max(1, Math.ceil(totalTasks / tasksPerPage));
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchTerm]);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const Pagination = () => {
+    if (totalPages <= 1) return null;
+    
+    return (
+      <div className="flex justify-end mt-6">
+        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+          <button
+            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+              currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            <span className="sr-only">Previous</span>
+            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+          
+          {/* Page numbers */}
+          {[...Array(totalPages)].map((_, index) => {
+            const pageNumber = index + 1;
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => handlePageChange(pageNumber)}
+                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                  currentPage === pageNumber
+                    ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
+          
+          <button
+            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+              currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            <span className="sr-only">Next</span>
+            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </nav>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -141,6 +229,12 @@ const TaskList = () => {
               placeholder="Search tasks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  setCurrentPage(1);
+                }
+              }}
             />
           </div>
         </div>
@@ -149,7 +243,7 @@ const TaskList = () => {
       {filteredTasks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
           <svg className="w-16 h-16 text-gray-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           <p className="text-lg text-gray-600 mb-2">No tasks found</p>
           <p className="text-gray-500 text-sm mb-4">Create your first task or adjust your search filters</p>
@@ -228,8 +322,13 @@ const TaskList = () => {
         </div>
       )}
       
+      <Pagination />
+      
       <div className="mt-6 flex justify-between items-center text-sm text-gray-500">
-        <p>Showing {filteredTasks.length} of {tasks.length} tasks</p>
+        <p>Showing {paginatedTasks.length} of {filteredTasks.length} 
+          {statusFilter !== 'all' ? ` ${statusFilter}` : ''} tasks
+          {totalPages > 1 && ` (page ${currentPage} of ${totalPages})`}
+        </p>
         <p>Last updated: {new Date().toLocaleTimeString()}</p>
       </div>
     </div>

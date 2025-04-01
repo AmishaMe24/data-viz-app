@@ -9,8 +9,8 @@ const api = {
     return response.data;
   },
   
-  getTasks: async () => {
-    const response = await axios.get(`${API_URL}/tasks/`);
+  getTasks: async (skip = 0, limit = 10) => {
+    const response = await axios.get(`${API_URL}/tasks/?skip=${skip}&limit=${limit}`);
     return response.data;
   },
   

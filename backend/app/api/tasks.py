@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db.database import get_db
 from app.models.models import Task, Record, TaskStatus
-from app.schemas.schemas import TaskCreate, TaskResponse, RecordResponse
+from app.schemas.schemas import TaskCreate, TaskResponse, RecordResponse, PaginatedTaskResponse
 from app.services.job_queue import enqueue_task
 import datetime
 import logging
@@ -34,10 +34,22 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     
     return db_task
 
-@router.get("/tasks/", response_model=List[TaskResponse])
-def get_tasks(db: Session = Depends(get_db)):
-    logger.info("Fetching all tasks")
-    return db.query(Task).all()
+@router.get("/tasks/", response_model=PaginatedTaskResponse)
+def get_tasks(
+    skip: int = 0, 
+    limit: int = 10,
+    db: Session = Depends(get_db)
+):
+    logger.info(f"Fetching tasks with pagination: skip={skip}, limit={limit}")
+    
+    total = db.query(Task).count()
+    
+    tasks = db.query(Task).order_by(Task.created_at.desc()).offset(skip).limit(limit).all()
+    
+    return {
+        "items": tasks,
+        "total": total
+    }
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
 def get_task(task_id: int, db: Session = Depends(get_db)):

@@ -77,3 +77,10 @@ class RecordResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class PaginatedTaskResponse(BaseModel):
+    items: List[TaskResponse]
+    total: int
+    
+    class Config:
+        orm_mode = True
