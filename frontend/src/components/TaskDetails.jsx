@@ -24,7 +24,6 @@ const TaskDetail = () => {
 
     fetchTaskData();
 
-    // Poll for updates if task is not completed
     let interval;
     if (task && task.status !== 'completed' && task.status !== 'failed') {
       interval = setInterval(() => fetchTaskData(), 2000);

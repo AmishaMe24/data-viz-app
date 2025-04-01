@@ -42,16 +42,16 @@ const TaskAnalytics = () => {
 
   // Color palette
   const colorPalette = {
-    primary: ["#3949AB", "#5E97F6", "#9FA8DA", "#FFB74D", "#FFA726", "#FF9800"],
+    primary: ["#4F46E5", "#06B6D4", "#8B5CF6", "#F97316", "#10B981", "#EC4899"],
     secondary: [
-      "#5C6BC0",
-      "#42A5F5",
-      "#7986CB",
-      "#FFA000",
-      "#FF8F00",
-      "#FFC107",
+      "#6366F1", 
+      "#0EA5E9", 
+      "#A78BFA", 
+      "#FB923C", 
+      "#34D399", 
+      "#F472B6"
     ],
-    light: ["#C5CAE9", "#BBDEFB", "#D1C4E9", "#FFECB3", "#FFE0B2", "#FFCC80"],
+    light: ["#C7D2FE", "#BAE6FD", "#DDD6FE", "#FED7AA", "#A7F3D0", "#FBCFE8"],
   };
 
   const filterDataByTimeRange = (data) => {

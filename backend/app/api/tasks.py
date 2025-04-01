@@ -47,7 +47,6 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_task)
     
-    # Add task to the queue for processing
     enqueue_task(db_task.id)
     
     return db_task
@@ -66,7 +65,7 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 @router.get("/tasks/{task_id}/records", response_model=List[RecordResponse])
 def get_task_records(
     task_id: int,
-    companies: List[str] = Query(None),  # Use Query with default None to handle multiple values
+    companies: List[str] = Query(None),
     model: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
@@ -74,14 +73,11 @@ def get_task_records(
 ):
     print(f"Companies filter: {companies}")
     
-    # Start building the query
     query = db.query(Record).filter(Record.task_id == task_id)
     
-    # Apply company filter if provided
     if companies:
         query = query.filter(Record.company.in_(companies))
     
-    # Rest of the filtering logic remains the same
     if model:
         query = query.filter(Record.model == model)
     if start_date:
@@ -89,7 +85,6 @@ def get_task_records(
             start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
             query = query.filter(Record.sale_date >= start_date)
         except ValueError:
-            # Try parsing as just a year
             try:
                 start_date = datetime.datetime.strptime(f"{start_date}-01-01", "%Y-%m-%d")
                 query = query.filter(Record.sale_date >= start_date)
@@ -100,7 +95,6 @@ def get_task_records(
             end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
             query = query.filter(Record.sale_date <= end_date)
         except ValueError:
-            # Try parsing as just a year
             try:
                 end_date = datetime.datetime.strptime(f"{end_date}-12-31", "%Y-%m-%d")
                 query = query.filter(Record.sale_date <= end_date)
@@ -116,7 +110,6 @@ def get_company_analytics(task_id: int, db: Session = Depends(get_db)):
     """Get sales analytics by company for a specific task."""
     records = db.query(Record).filter(Record.task_id == task_id).all()
     
-    # Group by company and calculate total sales
     company_data = {}
     for record in records:
         if record.company not in company_data:
@@ -129,14 +122,12 @@ def get_company_analytics(task_id: int, db: Session = Depends(get_db)):
         company_data[record.company]["total_sales"] += 1
         company_data[record.company]["total_revenue"] += record.price
     
-    # Calculate average price
     for company in company_data:
         if company_data[company]["total_sales"] > 0:
             company_data[company]["average_price"] = (
                 company_data[company]["total_revenue"] / company_data[company]["total_sales"]
             )
     
-    # Format for D3.js
     result = [
         {
             "company": company,
@@ -154,13 +145,11 @@ def get_timeline_analytics(task_id: int, db: Session = Depends(get_db)):
     """Get sales timeline analytics for a specific task."""
     records = db.query(Record).filter(Record.task_id == task_id).all()
     
-    # Group by month and company, then calculate total sales
     timeline_data = {}
     for record in records:
         month_key = record.sale_date.strftime("%Y-%m")
         company = record.company
         
-        # Create a unique key combining month and company
         entry_key = f"{month_key}_{company}"
         
         if entry_key not in timeline_data:
@@ -174,7 +163,6 @@ def get_timeline_analytics(task_id: int, db: Session = Depends(get_db)):
         timeline_data[entry_key]["total_sales"] += 1
         timeline_data[entry_key]["total_revenue"] += record.price
     
-    # Format for D3.js
     result = list(timeline_data.values())
     result.sort(key=lambda x: x["date"])
     

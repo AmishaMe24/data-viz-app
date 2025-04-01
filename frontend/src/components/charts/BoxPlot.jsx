@@ -39,7 +39,6 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
       return;
     }
     
-    // Filter data based on selected companies
     const filteredData = data.filter(item => selectedCompanies.includes(item.company));
     
     if (filteredData.length === 0) {
@@ -61,10 +60,8 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
       return;
     }
     
-    // Group data by model
     const modelGroups = d3.group(filteredData, d => d.model);
     
-    // Calculate statistics for each model
     const boxPlotData = Array.from(modelGroups, ([model, values]) => {
       const prices = values.map(d => +d.price || +d.total_revenue / +d.total_sales || 0).filter(p => p > 0);
       
@@ -79,7 +76,6 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
       const min = Math.max(d3.min(prices), q1 - 1.5 * iqr);
       const max = Math.min(d3.max(prices), q3 + 1.5 * iqr);
       
-      // Find outliers
       const outliers = prices.filter(p => p < min || p > max);
       
       return {
@@ -113,23 +109,19 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
       return;
     }
     
-    // Get container dimensions
     const containerWidth = containerRef.current.clientWidth;
     const containerHeight = containerRef.current.clientHeight;
     
-    // Set dimensions and margins
     const margin = { top: 40, right: 30, bottom: 20, left: 60 };
     const width = containerWidth - margin.left - margin.right;
     const height = containerHeight - margin.top - margin.bottom;
     
-    // Create SVG
     const svg = d3.select(svgRef.current)
       .attr('width', containerWidth)
       .attr('height', containerHeight)
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
     
-    // Create scales
     const x = d3.scaleBand()
       .domain(boxPlotData.map(d => d.model))
       .range([0, width])
@@ -139,11 +131,9 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
       .domain([0, d3.max(boxPlotData, d => Math.max(d.max, ...d.outliers)) * 1.1])
       .range([height, 0]);
     
-    // Create axes
     const xAxis = d3.axisBottom(x);
     const yAxis = d3.axisLeft(y).tickFormat(d => `$${d3.format(',')(d)}`);
     
-    // Add X axis
     svg.append('g')
       .attr('transform', `translate(0,${height})`)
       .call(xAxis)
@@ -154,13 +144,11 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
       .attr('transform', 'rotate(-45)')
       .style('font-size', '10px');
     
-    // Add Y axis
     svg.append('g')
       .call(yAxis)
       .selectAll('text')
       .style('font-size', '10px');
     
-    // Add title
     svg.append('text')
       .attr('x', width / 2)
       .attr('y', -margin.top / 2)
@@ -169,15 +157,12 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
       .style('font-weight', 'bold')
       .text('Price Distribution by Model');
     
-    // Draw box plots
     const boxWidth = x.bandwidth();
     
-    // For each box plot
     boxPlotData.forEach((d, i) => {
       const companyIndex = selectedCompanies.indexOf(d.company);
       const color = colorPalette.primary[companyIndex % colorPalette.primary.length];
       
-      // Draw the vertical line from min to max
       svg.append('line')
         .attr('x1', x(d.model) + boxWidth / 2)
         .attr('x2', x(d.model) + boxWidth / 2)
@@ -186,7 +171,6 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
         .attr('stroke', 'black')
         .attr('stroke-width', 1);
       
-      // Draw the box from q1 to q3
       svg.append('rect')
         .attr('x', x(d.model))
         .attr('y', y(d.q3))
@@ -197,7 +181,6 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
         .attr('stroke-width', 1)
         .attr('opacity', 0.7);
       
-      // Draw the median line
       svg.append('line')
         .attr('x1', x(d.model))
         .attr('x2', x(d.model) + boxWidth)
@@ -206,7 +189,6 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
         .attr('stroke', 'black')
         .attr('stroke-width', 2);
       
-      // Draw the min line (whisker)
       svg.append('line')
         .attr('x1', x(d.model) + boxWidth * 0.25)
         .attr('x2', x(d.model) + boxWidth * 0.75)
@@ -215,7 +197,6 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
         .attr('stroke', 'black')
         .attr('stroke-width', 1);
       
-      // Draw the max line (whisker)
       svg.append('line')
         .attr('x1', x(d.model) + boxWidth * 0.25)
         .attr('x2', x(d.model) + boxWidth * 0.75)
@@ -224,7 +205,6 @@ const BoxPlot = ({ data, selectedCompanies, colorPalette }) => {
         .attr('stroke', 'black')
         .attr('stroke-width', 1);
       
-      // Draw outliers
       d.outliers.forEach(outlier => {
         svg.append('circle')
           .attr('cx', x(d.model) + boxWidth / 2)

@@ -18,11 +18,9 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
   }, [data, selectedCompanies, colorPalette]);
   
   const renderChart = () => {
-    // Clear previous chart
     d3.select(svgRef.current).selectAll('*').remove();
     
     if (!data || !selectedCompanies || selectedCompanies.length === 0 || !svgRef.current) {
-      // Display "No data available" message
       const containerWidth = containerRef.current?.clientWidth || 300;
       const containerHeight = containerRef.current?.clientHeight || 300;
       
@@ -41,10 +39,8 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
       return;
     }
     
-    // Filter data based on selected companies
     const filteredData = data.filter(item => selectedCompanies.includes(item.company));
     
-    // Check if filtered data is empty
     if (filteredData.length === 0) {
       const containerWidth = containerRef.current.clientWidth;
       const containerHeight = containerRef.current.clientHeight;
@@ -64,7 +60,6 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
       return;
     }
     
-    // Aggregate data by company
     const aggregatedData = Array.from(
       d3.group(filteredData, d => d.company),
       ([company, values]) => ({
@@ -73,7 +68,6 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
       })
     );
     
-    // Check if there's any sales data
     if (aggregatedData.every(d => d.total_sales === 0)) {
       const containerWidth = containerRef.current.clientWidth;
       const containerHeight = containerRef.current.clientHeight;
@@ -93,7 +87,6 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
       return;
     }
     
-    // Get container dimensions
     const containerWidth = containerRef.current.clientWidth;
     const containerHeight = containerRef.current.clientHeight;
     
@@ -101,14 +94,12 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
     const width = containerWidth - margin.left - margin.right;
     const height = containerHeight - margin.top - margin.bottom;
     
-    // Create SVG - set explicit width and height
     const svg = d3.select(svgRef.current)
       .attr('width', containerWidth)
       .attr('height', containerHeight)
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
     
-    // Create scales
     const x = d3.scaleBand()
       .domain(aggregatedData.map(d => d.company))
       .range([0, width])
@@ -118,11 +109,9 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
       .domain([0, d3.max(aggregatedData, d => d.total_sales) * 1.1])
       .range([height, 0]);
     
-    // Create axes
     const xAxis = d3.axisBottom(x);
     const yAxis = d3.axisLeft(y);
     
-    // Add X axis
     svg.append('g')
       .attr('transform', `translate(0,${height})`)
       .call(xAxis)
@@ -131,13 +120,11 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
       .attr('dy', '1em')
       .style('font-size', '12px');
     
-    // Add Y axis
     svg.append('g')
       .call(yAxis)
       .selectAll('text')
       .style('font-size', '12px');
     
-    // Add bars
     svg.selectAll('.bar')
       .data(aggregatedData)
       .enter()
@@ -149,7 +136,6 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
       .attr('height', d => height - y(d.total_sales))
       .attr('fill', (d, i) => colorPalette.primary[i % colorPalette.primary.length]);
     
-    // Add title
     svg.append('text')
       .attr('x', width / 2)
       .attr('y', -margin.top / 2)
@@ -158,7 +144,6 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
       .style('font-weight', 'bold')
       .text('Total Sales by Company');
       
-    // Add labels on top of bars
     svg.selectAll('.label')
       .data(aggregatedData)
       .enter()

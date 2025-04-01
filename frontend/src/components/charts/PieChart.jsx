@@ -207,7 +207,7 @@ const PieChart = ({ data, selectedCompanies, colorPalette }) => {
       .text('Distribution');
     
     const legendGroup = svg.append('g')
-      .attr('transform', `translate(${-radius},${radius + 40})`);
+      .attr('transform', `translate(${-width/2 + margin.left},${radius + 10})`);
     
     const total = d3.sum(chartData, d => d.total_revenue);
     
@@ -217,10 +217,11 @@ const PieChart = ({ data, selectedCompanies, colorPalette }) => {
       .append('g')
       .attr('class', 'legend')
       .attr('transform', (d, i) => {
-        if (chartData.length <= 3) {
-          return `translate(${i * (radius * 1.5)}, 0)`;
-        }
-        return `translate(0, ${i * 25})`;
+        const itemWidth = width / Math.min(chartData.length, 3);
+        const row = Math.floor(i / 3);
+        const col = i % 3;
+        
+        return `translate(${col * itemWidth}, ${row * 25})`;
       });
     
     legendItems.append('rect')
@@ -232,11 +233,16 @@ const PieChart = ({ data, selectedCompanies, colorPalette }) => {
       .attr('x', 25)
       .attr('y', 12)
       .style('font-size', '12px')
-      .style('font-weight', 'bold')
       .text(d => {
         const percent = Math.round(d.total_revenue / total * 100);
         return `${d.company} (${percent}%)`;
       });
+    
+    const legendRows = Math.ceil(chartData.length / 3);
+    const legendHeight = legendRows * 25 + 40;
+    
+    d3.select(svgRef.current)
+      .attr('height', containerHeight + legendHeight);
   };
   
   return (

@@ -18,7 +18,6 @@ const TaskRecords = ({ taskId }) => {
   // Active filters that are currently applied
   const [activeFilters, setActiveFilters] = useState({});
 
-  // Fetch records only when taskId or activeFilters change
   useEffect(() => {
     const fetchRecords = async () => {
       try {
@@ -47,7 +46,6 @@ const TaskRecords = ({ taskId }) => {
   const handleFilter = (e) => {
     e.preventDefault();
     
-    // Create new filters object
     const newFilters = {};
     if (model) newFilters.model = model;
     if (startDate) newFilters.start_date = startDate;
@@ -113,7 +111,6 @@ const TaskRecords = ({ taskId }) => {
         </div>
       </div>
 
-      {/* Filter section - updated to match the image aesthetic */}
       <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
         <div className="mb-4">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Filter Companies</h3>
@@ -209,7 +206,6 @@ const TaskRecords = ({ taskId }) => {
         </form>
       </div>
 
-      {/* Records table - updated styling */}
       <div className="overflow-hidden">
         <div className="overflow-x-auto" style={{ height: '450px' }}>
           <table className="min-w-full divide-y divide-gray-200">

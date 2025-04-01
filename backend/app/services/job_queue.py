@@ -13,12 +13,10 @@ from io import StringIO
 from sqlalchemy.orm import Session
 from app.models.models import Task, Record, TaskStatus
 
-# Create a simple in-memory queue
 task_queue = queue.Queue()
 
 async def process_task_async(task_id: int, db: Session):
     """Process a task from the queue asynchronously."""
-    # Update task status to in progress
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         print(f"Task {task_id} not found")
