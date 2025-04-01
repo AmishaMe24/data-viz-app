@@ -54,7 +54,6 @@ const TaskAnalytics = () => {
     light: ["#C5CAE9", "#BBDEFB", "#D1C4E9", "#FFECB3", "#FFE0B2", "#FFCC80"],
   };
 
-  // Add this function to filter data based on time range
   const filterDataByTimeRange = (data) => {
     if (!data || timeRange === "all") return data;
 
@@ -127,22 +126,18 @@ const TaskAnalytics = () => {
   const calculateKPIs = (timelineData) => {
     if (!timelineData || timelineData.length === 0) return null;
 
-    // Total Sales Revenue - check for both revenue and total_revenue
     const totalRevenue = timelineData.reduce(
       (sum, item) => sum + (Number(item.total_revenue || item.revenue) || 0),
       0
     );
 
-    // Sales Volume - check for both sales and total_sales
     const totalSales = timelineData.reduce(
       (sum, item) => sum + (Number(item.total_sales || item.sales) || 0),
       0
     );
 
-    // Average Sale Price
     const avgPrice = totalSales > 0 ? Math.round(totalRevenue / totalSales) : 0;
 
-    // Sales by Make/Model - find top model
     const modelSales = {};
     timelineData.forEach((item) => {
       if (item.model) {
@@ -154,7 +149,6 @@ const TaskAnalytics = () => {
       }
     });
 
-    // Find top selling model
     let topModel = { name: "None", count: 0 };
     Object.entries(modelSales).forEach(([model, data]) => {
       if (data.count > topModel.count) {
@@ -162,13 +156,11 @@ const TaskAnalytics = () => {
       }
     });
 
-    // Monthly Sales Trends - calculate trend percentage
     const sortedData = [...timelineData].sort(
       (a, b) => new Date(a.date) - new Date(b.date)
     );
     const months = {};
 
-    // Group by month - update to use total_sales and total_revenue if available
     sortedData.forEach((item) => {
       const date = new Date(item.date);
       const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -183,7 +175,6 @@ const TaskAnalytics = () => {
       );
     });
 
-    // Calculate trend (compare last two months)
     const monthKeys = Object.keys(months).sort();
     let salesTrend = 0;
     let revenueTrend = 0;
@@ -203,7 +194,6 @@ const TaskAnalytics = () => {
       }
     }
 
-    // Sales distribution by year
     const yearSales = {};
     timelineData.forEach((item) => {
       const year = new Date(item.date).getFullYear();
@@ -214,7 +204,6 @@ const TaskAnalytics = () => {
       yearSales[year].revenue += Number(item.revenue) || 0;
     });
 
-    // Find year with highest sales
     let topYear = { year: "None", count: 0 };
     Object.entries(yearSales).forEach(([year, data]) => {
       if (data.count > topYear.count) {
@@ -249,10 +238,7 @@ const TaskAnalytics = () => {
     setSelectedCompanies([]);
   };
 
-  // Update the time range handler
   const handleTimeRangeChange = (e) => {
-    // If e is an event (from dropdown), use e.target.value
-    // If e is a string (from button click), use e directly
     const newTimeRange = typeof e === "string" ? e : e.target.value;
     setTimeRange(newTimeRange);
   };
@@ -276,7 +262,6 @@ const TaskAnalytics = () => {
     );
   }
 
-  // Helper function to convert time range to start date
   const getStartDateFromTimeRange = (range) => {
     const now = new Date();
     let startDate;
@@ -623,7 +608,6 @@ const TaskAnalytics = () => {
 
 export default TaskAnalytics;
 
-// Helper function to find the top-selling company
 const findTopCompany = (data) => {
   if (!data || data.length === 0) return "None";
 
