@@ -9,13 +9,10 @@ import LineChart from "./charts/LineChart";
 import BoxPlot from "./charts/BoxPlot";
 import KpiCard from "./charts/KpiCard";
 import MetricsTable from "./charts/MetricsTable";
-import CompanyFilter from "./filters/CompanyFilter";
-import DateFilter from "./filters/DateFilter";
 
 const TaskAnalytics = () => {
   const { id } = useParams();
   const [task, setTask] = useState(null);
-  const [companyData, setCompanyData] = useState([]);
   const [timelineData, setTimelineData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -100,22 +97,14 @@ const TaskAnalytics = () => {
         }
 
         const companyAnalytics = await api.getCompanyAnalytics(id);
-        setCompanyData(companyAnalytics);
-
-        console.log("Fetched company data:", companyAnalytics);
 
         const timelineAnalytics = await api.getTimelineAnalytics(id);
         const filteredTimelineData = filterDataByTimeRange(timelineAnalytics);
         setTimelineData(filteredTimelineData);
 
-        // Set default selected companies (all available companies)
         setSelectedCompanies([...allCompanies]);
 
-        console.log("Fetched timeline data:", filteredTimelineData);
-
-        // Calculate summary metrics
-        calculateSummaryMetrics(companyAnalytics, filteredTimelineData);
-        const kpiData = calculateKPIs(timelineData);
+        const kpiData = calculateKPIs(filteredTimelineData);
         setKpis(kpiData);
       } catch (err) {
         setError("Failed to fetch analytics data");
@@ -126,36 +115,14 @@ const TaskAnalytics = () => {
     };
 
     fetchData();
-  }, [id, timeRange]); // Add timeRange as a dependency
+  }, [id, timeRange]);
 
-  const calculateSummaryMetrics = (companies, timeline) => {
-    // Calculate total sales
-    const total = companies.reduce(
-      (sum, company) => sum + company.total_sales,
-      0
-    );
-    setTotalSales(total);
-
-    // Calculate average price
-    const totalRevenue = companies.reduce(
-      (sum, company) => sum + company.total_revenue,
-      0
-    );
-    setAvgPrice(total > 0 ? Math.round(totalRevenue / total) : 0);
-
-    // Find top company by sales
-    if (companies.length > 0) {
-      const top = companies.reduce((prev, current) =>
-        prev.total_sales > current.total_sales ? prev : current
-      );
-      setTopCompany(top.company);
+  useEffect(() => {
+    if (timelineData && timelineData.length > 0) {
+      const kpiData = calculateKPIs(timelineData);
+      setKpis(kpiData);
     }
-
-    // Set placeholder values for demo
-    setTopModel("Camry");
-    setSuccessRate(0.9);
-    setErrorRate(0.1);
-  };
+  }, [timelineData]);
 
   const calculateKPIs = (timelineData) => {
     if (!timelineData || timelineData.length === 0) return null;
@@ -435,7 +402,7 @@ const TaskAnalytics = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-7 gap-3 mb-4">
+            <div className="grid grid-cols-5 gap-3 mb-4">
               <KpiCard
                 title="Total Sales"
                 value={
@@ -443,8 +410,6 @@ const TaskAnalytics = () => {
                     ? `$${Math.round(kpis.totalRevenue).toLocaleString()}`
                     : "$0"
                 }
-                trend="-74.6%"
-                trendDirection="down"
                 icon="sales"
                 color="green"
                 subtitle="Sum of all sales"
@@ -454,8 +419,6 @@ const TaskAnalytics = () => {
               <KpiCard
                 title="Average Sale Price"
                 value={kpis ? `$${kpis.avgPrice.toLocaleString()}` : "$0"}
-                trend="+0.2%"
-                trendDirection="up"
                 icon="average"
                 color="blue"
                 subtitle="Price comparison value"
@@ -472,17 +435,12 @@ const TaskAnalytics = () => {
               />
 
               <KpiCard
-                title="Top Selling Model"
-                value={kpis ? kpis.topModel.name : "None"}
-                subtitle="Most popular model"
-                icon="volume"
-                color="blue"
-                size="small"
-              />
-
-              <KpiCard
                 title="Monthly Growth"
-                value="+66.7%"
+                value={kpis ? `${kpis.salesTrend}%` : "0%"}
+                trend={kpis && parseFloat(kpis.salesTrend) > 0 ? "up" : "down"}
+                trendDirection={
+                  kpis && parseFloat(kpis.salesTrend) > 0 ? "up" : "down"
+                }
                 icon="calendar"
                 color="green"
                 subtitle="Last 30 days"
@@ -490,17 +448,8 @@ const TaskAnalytics = () => {
               />
 
               <KpiCard
-                title="Quarterly Sales"
-                value="$47,225"
-                icon="price"
-                color="blue"
-                subtitle="Last 3 months"
-                size="small"
-              />
-
-              <KpiCard
                 title="Sales by Make"
-                value="Toyota"
+                value={kpis ? findTopCompany(timelineData) : "None"}
                 subtitle="Top performing brand"
                 icon="volume"
                 color="yellow"
@@ -673,3 +622,31 @@ const TaskAnalytics = () => {
 };
 
 export default TaskAnalytics;
+
+// Helper function to find the top-selling company
+const findTopCompany = (data) => {
+  if (!data || data.length === 0) return "None";
+
+  // Group sales by company
+  const companySales = {};
+  data.forEach((item) => {
+    const company = item.company;
+    if (!company) return;
+
+    if (!companySales[company]) {
+      companySales[company] = 0;
+    }
+
+    companySales[company] += Number(item.total_sales || item.sales) || 0;
+  });
+
+  // Find company with highest sales
+  let topCompany = { name: "None", sales: 0 };
+  Object.entries(companySales).forEach(([company, sales]) => {
+    if (sales > topCompany.sales) {
+      topCompany = { name: company, sales };
+    }
+  });
+
+  return topCompany.name;
+};

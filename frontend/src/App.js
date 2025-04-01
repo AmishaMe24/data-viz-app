@@ -102,6 +102,7 @@ function AppContent() {
       <MainContent currentPath={currentPath}>
         <Routes>
           <Route path="/" element={<TaskList />} />
+          <Route path="/tasks" element={<TaskList />} />
           <Route path="/tasks/new" element={<TaskForm />} />
           <Route path="/tasks/:id" element={<TaskDetails />} />
           <Route path="/tasks/:id/analytics" element={<TaskAnalytics />} />
