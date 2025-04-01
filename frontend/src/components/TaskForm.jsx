@@ -10,6 +10,7 @@ const TaskForm = () => {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [yearErrors, setYearErrors] = useState({ startYear: '', endYear: '' });
 
   const companyOptions = ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes'];
 
@@ -21,8 +22,52 @@ const TaskForm = () => {
     }
   };
 
+  const validateYears = () => {
+    const errors = { startYear: '', endYear: '' };
+    let isValid = true;
+
+    if (startYear && parseInt(startYear) < 0) {
+      errors.startYear = 'Start year cannot be negative';
+      isValid = false;
+    }
+
+    if (endYear && parseInt(endYear) < 0) {
+      errors.endYear = 'End year cannot be negative';
+      isValid = false;
+    }
+
+    if (startYear && endYear && parseInt(endYear) <= parseInt(startYear)) {
+      errors.endYear = 'End year must be greater than start year';
+      isValid = false;
+    }
+
+    setYearErrors(errors);
+    return isValid;
+  };
+
+  const handleStartYearChange = (e) => {
+    const value = e.target.value;
+    setStartYear(value);
+    if (yearErrors.startYear) {
+      setYearErrors(prev => ({ ...prev, startYear: '' }));
+    }
+  };
+
+  const handleEndYearChange = (e) => {
+    const value = e.target.value;
+    setEndYear(value);
+    if (yearErrors.endYear) {
+      setYearErrors(prev => ({ ...prev, endYear: '' }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateYears()) {
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
@@ -39,7 +84,15 @@ const TaskForm = () => {
       const response = await api.createTask(taskData);
       navigate(`/tasks/${response.id}`);
     } catch (err) {
-      setError('Failed to create task. Please try again.');
+      if (err.response && err.response.data && err.response.data.detail) {
+        if (err.response.data.detail === "Task with this name already exists") {
+          setError('A task with this name already exists. Please use a different name.');
+        } else {
+          setError(`Failed to create task: ${err.response.data.detail}`);
+        }
+      } else {
+        setError('Failed to create task. Please try again.');
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -96,14 +149,18 @@ const TaskForm = () => {
                     </svg>
                   </div>
                   <input
-                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full pl-10 px-4 py-3 border ${yearErrors.startYear ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500`}
                     id="startYear"
                     type="number"
+                    min="0"
                     placeholder="e.g., 2023"
                     value={startYear}
-                    onChange={(e) => setStartYear(e.target.value)}
+                    onChange={handleStartYearChange}
                   />
                 </div>
+                {yearErrors.startYear && (
+                  <p className="mt-1 text-sm text-red-600">{yearErrors.startYear}</p>
+                )}
               </div>
               
               <div>
@@ -117,14 +174,18 @@ const TaskForm = () => {
                     </svg>
                   </div>
                   <input
-                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full pl-10 px-4 py-3 border ${yearErrors.endYear ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500`}
                     id="endYear"
                     type="number"
+                    min="0"
                     placeholder="e.g., 2024"
                     value={endYear}
-                    onChange={(e) => setEndYear(e.target.value)}
+                    onChange={handleEndYearChange}
                   />
                 </div>
+                {yearErrors.endYear && (
+                  <p className="mt-1 text-sm text-red-600">{yearErrors.endYear}</p>
+                )}
               </div>
             </div>
             

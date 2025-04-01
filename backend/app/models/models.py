@@ -20,7 +20,7 @@ class Task(Base):
     status = Column(String, default=TaskStatus.PENDING)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-    parameters = Column(JSON)  # Store filtering parameters as JSON
+    parameters = Column(JSON)
     
     records = relationship("Record", back_populates="task")
 

@@ -20,7 +20,7 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(tasks.router, prefix="/api")
+app.include_router(tasks.router, prefix="/api", tags=["tasks"])
 
 # Start the worker thread
 start_worker(get_db)
