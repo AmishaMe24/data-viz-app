@@ -59,8 +59,6 @@ const LineChart = ({
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    console.log("Line Chart Data:", data);
-
     // Process data
     const processedData = data.map((d) => ({
       ...d,
@@ -179,7 +177,7 @@ const LineChart = ({
       .append("text")
       .attr("class", "x-axis-label")
       .attr("x", width / 2)
-      .attr("y", height + margin.bottom - 15) // Position higher
+      .attr("y", height + 40) // Reduced from margin.bottom - 15 to a fixed value
       .attr("text-anchor", "middle")
       .style("font-size", "14px")
       .text("Date");
@@ -206,7 +204,7 @@ const LineChart = ({
       .style("font-size", "14px")
       .text("Sales Volume");
 
-    // Add chart title
+    // Add chart title with dynamic date range
     svg
       .append("text")
       .attr("class", "chart-title")
@@ -215,7 +213,18 @@ const LineChart = ({
       .attr("text-anchor", "middle")
       .style("font-size", "16px")
       .style("font-weight", "bold")
-      .text("Sales Volume by Month");
+      .text(() => {
+        // Create dynamic title based on date range
+        if (startDate && endDate) {
+          return `Sales Volume (${startDate} to ${endDate})`;
+        } else if (startDate) {
+          return `Sales Volume (From ${startDate})`;
+        } else if (endDate) {
+          return `Sales Volume (Until ${endDate})`;
+        } else {
+          return "Sales Volume by Month";
+        }
+      });
 
     // Group data by company
     const nestedData = d3.group(timeSeriesData, (d) => d.company);

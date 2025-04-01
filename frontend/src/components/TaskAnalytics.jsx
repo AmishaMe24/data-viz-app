@@ -22,10 +22,8 @@ const TaskAnalytics = () => {
   const [kpis, setKpis] = useState(null);
 
   // Filter states
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [selectedCompanies, setSelectedCompanies] = useState([]);
-  const [timeRange, setTimeRange] = useState("6m"); // Default to 6 months
+  const [timeRange, setTimeRange] = useState("all"); // Default to 6 months
 
   // Summary metrics
   const [totalSales, setTotalSales] = useState(0);
@@ -311,6 +309,35 @@ const TaskAnalytics = () => {
     );
   }
 
+  // Helper function to convert time range to start date
+  const getStartDateFromTimeRange = (range) => {
+    const now = new Date();
+    let startDate;
+    
+    switch (range) {
+      case "6m":
+        startDate = new Date(now);
+        startDate.setMonth(now.getMonth() - 6);
+        break;
+      case "1y":
+        startDate = new Date(now);
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      case "3y":
+        startDate = new Date(now);
+        startDate.setFullYear(now.getFullYear() - 3);
+        break;
+      case "5y":
+        startDate = new Date(now);
+        startDate.setFullYear(now.getFullYear() - 5);
+        break;
+      default:
+        return null;
+    }
+    
+    return startDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+  };
+
   return (
     <div className="bg-gray-100 min-h-screen">
       {/* Dashboard Header */}
@@ -510,9 +537,10 @@ const TaskAnalytics = () => {
                 <div className="h-64">
                   <LineChart
                     data={timelineData}
-                    startDate={startDate}
-                    endDate={endDate}
+                    selectedCompanies={selectedCompanies}
                     colorPalette={colorPalette}
+                    startDate={timeRange === "all" ? null : getStartDateFromTimeRange(timeRange)}
+                    endDate={new Date().toISOString().split('T')[0]}
                   />
                 </div>
               </div>
