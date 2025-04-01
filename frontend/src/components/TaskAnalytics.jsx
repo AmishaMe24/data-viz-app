@@ -115,7 +115,7 @@ const TaskAnalytics = () => {
 
         // Calculate summary metrics
         calculateSummaryMetrics(companyAnalytics, filteredTimelineData);
-        const kpiData = calculateKPIs(filteredTimelineData);
+        const kpiData = calculateKPIs(timelineData);
         setKpis(kpiData);
       } catch (err) {
         setError("Failed to fetch analytics data");
@@ -592,7 +592,7 @@ const TaskAnalytics = () => {
                 </div>
                 <div className="h-64">
                   <PieChart
-                    data={companyData}
+                    data={timelineData}
                     selectedCompanies={selectedCompanies}
                     colorPalette={colorPalette}
                   />
