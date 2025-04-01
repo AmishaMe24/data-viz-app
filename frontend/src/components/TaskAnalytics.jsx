@@ -625,7 +625,7 @@ const TaskAnalytics = () => {
                 </div>
                 <div className="h-64">
                   <BarChart
-                    data={companyData}
+                    data={timelineData}
                     selectedCompanies={selectedCompanies}
                     colorPalette={colorPalette}
                   />
@@ -658,7 +658,7 @@ const TaskAnalytics = () => {
                 </div>
                 <div className="h-64 overflow-auto">
                   <MetricsTable
-                    data={companyData}
+                    data={timelineData}
                     selectedCompanies={selectedCompanies}
                     colorPalette={colorPalette}
                   />

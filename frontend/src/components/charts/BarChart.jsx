@@ -1,31 +1,107 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 const BarChart = ({ data, selectedCompanies, colorPalette }) => {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    if (!data || !selectedCompanies || selectedCompanies.length === 0 || !svgRef.current) {
-      return;
-    }
+    setLoading(true);
     
+    setTimeout(() => {
+      renderChart();
+      setLoading(false);
+    }, 500);
+    
+    return () => {};
+  }, [data, selectedCompanies, colorPalette]);
+  
+  const renderChart = () => {
     // Clear previous chart
     d3.select(svgRef.current).selectAll('*').remove();
     
+    if (!data || !selectedCompanies || selectedCompanies.length === 0 || !svgRef.current) {
+      // Display "No data available" message
+      const containerWidth = containerRef.current?.clientWidth || 300;
+      const containerHeight = containerRef.current?.clientHeight || 300;
+      
+      const svg = d3.select(svgRef.current)
+        .attr('width', containerWidth)
+        .attr('height', containerHeight);
+        
+      svg.append('text')
+        .attr('x', containerWidth / 2)
+        .attr('y', containerHeight / 2)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '16px')
+        .style('fill', '#666')
+        .text('No data available');
+        
+      return;
+    }
+    
     // Filter data based on selected companies
-    const filteredData = data.filter(company => selectedCompanies.includes(company.company));
+    const filteredData = data.filter(item => selectedCompanies.includes(item.company));
+    
+    // Check if filtered data is empty
+    if (filteredData.length === 0) {
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight;
+      
+      const svg = d3.select(svgRef.current)
+        .attr('width', containerWidth)
+        .attr('height', containerHeight);
+        
+      svg.append('text')
+        .attr('x', containerWidth / 2)
+        .attr('y', containerHeight / 2)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '16px')
+        .style('fill', '#666')
+        .text('No data available for selected companies');
+        
+      return;
+    }
+    
+    // Aggregate data by company
+    const aggregatedData = Array.from(
+      d3.group(filteredData, d => d.company),
+      ([company, values]) => ({
+        company,
+        total_sales: d3.sum(values, d => d.total_sales)
+      })
+    );
+    
+    // Check if there's any sales data
+    if (aggregatedData.every(d => d.total_sales === 0)) {
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight;
+      
+      const svg = d3.select(svgRef.current)
+        .attr('width', containerWidth)
+        .attr('height', containerHeight);
+        
+      svg.append('text')
+        .attr('x', containerWidth / 2)
+        .attr('y', containerHeight / 2)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '16px')
+        .style('fill', '#666')
+        .text('No sales data available');
+        
+      return;
+    }
     
     // Get container dimensions
     const containerWidth = containerRef.current.clientWidth;
     const containerHeight = containerRef.current.clientHeight;
     
-    // Set dimensions and margins
-    const margin = { top: 10, right: 10, bottom: 40, left: 40 };
+    const margin = { top: 40, right: 20, bottom: 30, left: 50 };
     const width = containerWidth - margin.left - margin.right;
     const height = containerHeight - margin.top - margin.bottom;
     
-    // Create SVG
+    // Create SVG - set explicit width and height
     const svg = d3.select(svgRef.current)
       .attr('width', containerWidth)
       .attr('height', containerHeight)
@@ -34,12 +110,12 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
     
     // Create scales
     const x = d3.scaleBand()
-      .domain(filteredData.map(d => d.company))
+      .domain(aggregatedData.map(d => d.company))
       .range([0, width])
       .padding(0.3);
     
     const y = d3.scaleLinear()
-      .domain([0, d3.max(filteredData, d => d.total_sales) * 1.1])
+      .domain([0, d3.max(aggregatedData, d => d.total_sales) * 1.1])
       .range([height, 0]);
     
     // Create axes
@@ -51,21 +127,19 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
       .attr('transform', `translate(0,${height})`)
       .call(xAxis)
       .selectAll('text')
-      .style('text-anchor', 'end')
-      .attr('dx', '-.8em')
-      .attr('dy', '.15em')
-      .attr('transform', 'rotate(-45)')
-      .style('font-size', '8px');
+      .style('text-anchor', 'middle')
+      .attr('dy', '1em')
+      .style('font-size', '12px');
     
     // Add Y axis
     svg.append('g')
       .call(yAxis)
       .selectAll('text')
-      .style('font-size', '8px');
+      .style('font-size', '12px');
     
     // Add bars
     svg.selectAll('.bar')
-      .data(filteredData)
+      .data(aggregatedData)
       .enter()
       .append('rect')
       .attr('class', 'bar')
@@ -80,14 +154,31 @@ const BarChart = ({ data, selectedCompanies, colorPalette }) => {
       .attr('x', width / 2)
       .attr('y', -margin.top / 2)
       .attr('text-anchor', 'middle')
-      .style('font-size', '10px')
+      .style('font-size', '16px')
+      .style('font-weight', 'bold')
       .text('Total Sales by Company');
-    
-  }, [data, selectedCompanies, colorPalette]);
+      
+    // Add labels on top of bars
+    svg.selectAll('.label')
+      .data(aggregatedData)
+      .enter()
+      .append('text')
+      .attr('class', 'label')
+      .attr('x', d => x(d.company) + x.bandwidth() / 2)
+      .attr('y', d => y(d.total_sales) - 5)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '12px')
+      .text(d => d.total_sales);
+  };
   
   return (
-    <div ref={containerRef} className="w-full h-full overflow-hidden">
-      <svg ref={svgRef} style={{ maxWidth: '100%', maxHeight: '100%' }}></svg>
+    <div ref={containerRef} className="w-full h-full relative">
+      {loading ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : null}
+      <svg ref={svgRef} style={{ width: '100%', height: '100%' }}></svg>
     </div>
   );
 };
