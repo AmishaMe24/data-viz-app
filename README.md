@@ -1,6 +1,9 @@
 # Data Visualization Application
 This project is a full-stack data visualization application that processes and displays automotive sales data from multiple sources.
 
+![image](https://github.com/user-attachments/assets/9b4ac363-e636-4310-9b2c-da227c4882f3)
+
+
 ## Overview
 The application consists of:
 
