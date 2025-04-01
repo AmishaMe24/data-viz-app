@@ -154,19 +154,25 @@ def get_timeline_analytics(task_id: int, db: Session = Depends(get_db)):
     """Get sales timeline analytics for a specific task."""
     records = db.query(Record).filter(Record.task_id == task_id).all()
     
-    # Group by month and calculate total sales
+    # Group by month and company, then calculate total sales
     timeline_data = {}
     for record in records:
         month_key = record.sale_date.strftime("%Y-%m")
-        if month_key not in timeline_data:
-            timeline_data[month_key] = {
+        company = record.company
+        
+        # Create a unique key combining month and company
+        entry_key = f"{month_key}_{company}"
+        
+        if entry_key not in timeline_data:
+            timeline_data[entry_key] = {
                 "date": month_key,
+                "company": company,
                 "total_sales": 0,
                 "total_revenue": 0
             }
         
-        timeline_data[month_key]["total_sales"] += 1
-        timeline_data[month_key]["total_revenue"] += record.price
+        timeline_data[entry_key]["total_sales"] += 1
+        timeline_data[entry_key]["total_revenue"] += record.price
     
     # Format for D3.js
     result = list(timeline_data.values())

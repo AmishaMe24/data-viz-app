@@ -90,6 +90,7 @@ const TaskAnalytics = () => {
     const fetchData = async () => {
       try {
         const taskData = await api.getTask(id);
+        console.log("Fetched task data:", taskData);
         setTask(taskData);
 
         if (taskData.status !== "completed") {
@@ -103,6 +104,8 @@ const TaskAnalytics = () => {
         const companyAnalytics = await api.getCompanyAnalytics(id);
         setCompanyData(companyAnalytics);
 
+        console.log("Fetched company data:", companyAnalytics);
+
         const timelineAnalytics = await api.getTimelineAnalytics(id);
         const filteredTimelineData = filterDataByTimeRange(timelineAnalytics);
         setTimelineData(filteredTimelineData);
@@ -110,7 +113,7 @@ const TaskAnalytics = () => {
         // Set default selected companies (all available companies)
         setSelectedCompanies([...allCompanies]);
 
-        console.log("Fetched data:", filteredTimelineData);
+        console.log("Fetched timeline data:", filteredTimelineData);
 
         // Calculate summary metrics
         calculateSummaryMetrics(companyAnalytics, filteredTimelineData);
@@ -158,8 +161,6 @@ const TaskAnalytics = () => {
 
   const calculateKPIs = (timelineData) => {
     if (!timelineData || timelineData.length === 0) return null;
-
-    console.log("Calculating KPIs with data:", timelineData);
 
     // Total Sales Revenue - check for both revenue and total_revenue
     const totalRevenue = timelineData.reduce(
