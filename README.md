@@ -1,62 +1,101 @@
-# Data Visualization Web App
+# Data Visualization Application
+This project is a full-stack data visualization application that processes and displays automotive sales data from multiple sources.
 
-A web application for sourcing data from multiple external sources and visualizing it with interactive charts.
+## Overview
+The application consists of:
+
+- A backend API built with FastAPI, SQLAlchemy, and SQLite
+- A frontend interface built with React, D3.js, Tailwind CSS
+- Data processing and visualization components
+The system allows users to submit data processing tasks, which fetch and analyze automotive sales data from external sources. The processed data is then visualized through interactive charts and dashboards.
 
 ## Features
+- Task submission and management
+- Asynchronous data processing with status tracking
+- Interactive data visualizations including:
+  - Line charts for time-series analysis
+  - Bar charts for comparative analysis
+  - Pie charts for distribution analysis
+  - Box plots for statistical analysis
+- Filtering capabilities by company, time range, and other parameters
+- Real-time KPI metrics and analytics
+## Technical Stack
+### Backend
+- FastAPI
+- SQLAlchemy ORM
+- Asynchronous task processing
+- SQLite database
+### Frontend
+- React
+- D3.js for data visualization
+- Tailwind CSS for styling
+## Getting Started
+### Prerequisites
+- Python 3.8+
+- Node.js 14+
+- npm or yarn
+### Installation
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/data-viz-app.git
+cd data-viz-app
+ ```
+```
 
-- Create data sourcing tasks with custom filters
-- Process tasks in a job queue
-- View task details and records
-- Interactive data visualizations with D3.js
-- Filter and analyze data
+2. Set up the backend:
+```bash
+cd backend
+pip install -r requirements.txt
+ ```
 
-## Tech Stack
+3. Set up the frontend:
+```bash
+cd frontend
+npm install
+ ```
 
-- **Frontend**: React, D3.js, Tailwind CSS
-- **Backend**: FastAPI, SQLAlchemy
-- **Database**: SQLite
-- **Data Processing**: Pandas
+### Running the Application
+1. Start the backend server:
+```bash
+cd backend
+uvicorn app.main:app --reload
+ ```
 
-## Setup Instructions
+2. Start the frontend development server:
+```bash
+cd frontend
+npm start
+ ```
 
-### Backend Setup
-
-1. Navigate to the backend directory:
-cd d:\Amisha\Projects\data-viz-app\backend
-
-2. Create a virtual environment:
-python -m venv venv
-venv\Scripts\activate
-
-3. Install dependencies: 
-pip install fastapi uvicorn sqlalchemy pandas requests python-multipart
-4. Run the server: python run.py
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-cd d:\Amisha\Projects\data-viz-app\frontend
-
-2. Install dependencies: npm install
-3. Run the development server: npm start
-4. Open your browser and navigate to: http://localhost:3000
-
+3. Access the application at http://localhost:3000
 ## Usage
-
-1. Create a new task with filtering parameters
-2. Wait for the task to complete
-3. View the task details and records
-4. Explore the data visualizations
-5. Apply filters to analyze specific data subsets
-
+1. Navigate to the dashboard
+2. Create a new task with desired parameters
+3. Wait for the task to complete (status will change from "pending" to "in progress" to "completed")
+4. View the analytics dashboard with visualizations of the processed data
+5. Use filters to explore different aspects of the data
 ## Project Structure
+```plaintext
+data-viz-app/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   ├── models/
+│   │   ├── services/
+│   │   └── main.py
+│   └── requirements.txt
+└── frontend/
+    ├── public/
+    ├── src/
+    │   ├── components/
+    │   │   └── charts/
+    │   ├── services/
+    │   └── App.js
+    └── package.json
+ ```
 
-- `/frontend`: React application
-- `/src/components`: React components
-- `/src/services`: API services
-- `/backend`: FastAPI application
-- `/app/api`: API endpoints
-- `/app/models`: Database models
-- `/app/services`: Business logic
-- `/app/db`: Database configuration
-- `/data`: Sample data files
+## Data Sources
+The application fetches data from two external sources:
+
+- Source A: JSON API providing automotive sales data:  https://gist.github.com/AmishaMe24/f4aadff1bcabac79f6e882d1637d7401
+- Source B: CSV data source with complementary sales information, https://gist.github.com/AmishaMe24/d97130df157eb2c978ed5f838903033e
