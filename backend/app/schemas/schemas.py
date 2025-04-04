@@ -1,13 +1,16 @@
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, field_validator, Field
 import datetime
 from typing import List, Optional, Union, Dict, Any
 
 class TaskParameters(BaseModel):
-    start_year: Optional[Union[str, None]] = None
-    end_year: Optional[Union[str, None]] = None
-    companies: Optional[List[str]] = []
+    start_year_a: Optional[Union[str, None]] = None
+    end_year_a: Optional[Union[str, None]] = None
+    companies_a: Optional[List[str]] = []
+    start_year_b: Optional[Union[str, None]] = None
+    end_year_b: Optional[Union[str, None]] = None
+    companies_b: Optional[List[str]] = []
     
-    @validator('start_year')
+    @field_validator('start_year_a', 'start_year_b')
     def validate_start_year(cls, v):
         if v is None or v == "":
             return v
@@ -23,7 +26,7 @@ class TaskParameters(BaseModel):
                 raise
             raise ValueError("Start year must be a valid number")
     
-    @validator('end_year')
+    @field_validator('end_year_a', 'end_year_b')
     def validate_end_year(cls, v):
         if v is None or v == "":
             return v
@@ -39,17 +42,18 @@ class TaskParameters(BaseModel):
                 raise
             raise ValueError("End year must be a valid number")
     
-    @validator('companies')
+    @field_validator('companies_a', 'companies_b')
     def validate_companies(cls, v):
         if v is None:
             return []
         return v
 
+
 class TaskCreate(BaseModel):
     name: str = Field(..., min_length=1)
     parameters: TaskParameters
     
-    @validator('name')
+    @field_validator('name')
     def name_must_not_be_empty(cls, v):
         if not v or v.strip() == "":
             raise ValueError("Task name cannot be empty")
@@ -63,8 +67,9 @@ class TaskResponse(BaseModel):
     updated_at: datetime.datetime
     parameters: dict
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class RecordResponse(BaseModel):
     id: int
@@ -75,12 +80,14 @@ class RecordResponse(BaseModel):
     sale_date: datetime.datetime
     price: float
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class PaginatedTaskResponse(BaseModel):
     items: List[TaskResponse]
     total: int
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }

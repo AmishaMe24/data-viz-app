@@ -247,29 +247,61 @@ const TaskDetail = () => {
             </div>
 
             <div className="flex items-center space-x-3">
-              {/* Task quick stats */}
+              {/* Task quick stats: Source A */}
               <div className="hidden md:flex space-x-6 items-center mr-4">
-                {task.parameters && task.parameters.start_year && (
+                {task.parameters && task.parameters.start_year_a && (
                   <div className="flex flex-col">
-                    <span className="text-xs text-gray-500">Start Year</span>
+                    <span className="text-xs text-gray-500">Source A: Start Year</span>
                     <span className="text-sm font-medium">
-                      {task.parameters.start_year}
+                      {task.parameters.start_year_a}
                     </span>
                   </div>
                 )}
-                {task.parameters && task.parameters.end_year && (
+                {task.parameters && task.parameters.end_year_a && (
                   <div className="flex flex-col">
-                    <span className="text-xs text-gray-500">End Year</span>
+                    <span className="text-xs text-gray-500">Source A: End Year</span>
                     <span className="text-sm font-medium">
-                      {task.parameters.end_year}
+                      {task.parameters.end_year_a}
                     </span>
                   </div>
                 )}
-                {task.parameters && task.parameters.companies && (
+                {task.parameters && task.parameters.companies_a && (
                   <div className="flex flex-col">
-                    <span className="text-xs text-gray-500">Companies</span>
+                    <span className="text-xs text-gray-500">Source A: Companies</span>
                     <div className="flex flex-wrap gap-1">
-                      {task.parameters.companies.map((company, idx) => (
+                      {task.parameters.companies_a.map((company, idx) => (
+                        <span key={idx} className="text-sm font-medium bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-xs">
+                          {company}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Task quick stats: Source B */}
+              <div className="hidden md:flex space-x-6 items-center mr-4">
+                {task.parameters && task.parameters.start_year_b && (
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500">Source B: Start Year</span>
+                    <span className="text-sm font-medium">
+                      {task.parameters.start_year_b}
+                    </span>
+                  </div>
+                )}
+                {task.parameters && task.parameters.end_year_b && (
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500">Source B: End Year</span>
+                    <span className="text-sm font-medium">
+                      {task.parameters.end_year_b}
+                    </span>
+                  </div>
+                )}
+                {task.parameters && task.parameters.companies_b && (
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500">Source B: Companies</span>
+                    <div className="flex flex-wrap gap-1">
+                      {task.parameters.companies_b.map((company, idx) => (
                         <span key={idx} className="text-sm font-medium bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-xs">
                           {company}
                         </span>

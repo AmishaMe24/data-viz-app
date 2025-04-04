@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+aiohttp
+python-multipart
+pytest
+pytest-asyncio
+httpx
+pandas
+numpy

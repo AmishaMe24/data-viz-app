@@ -13,11 +13,14 @@ import logging
 from io import StringIO
 from sqlalchemy.orm import Session
 from app.models.models import Task, Record, TaskStatus
+from concurrent.futures import ThreadPoolExecutor
 
-# Set up logger
 logger = logging.getLogger(__name__)
 
 task_queue = queue.Queue()
+NUM_WORKERS = 4
+workers_running = True
+worker_threads = []
 
 async def process_task_async(task_id: int, db: Session):
     """Process a task from the queue asynchronously."""
@@ -168,9 +171,9 @@ async def fetch_source_a_data_async(params):
                     raise Exception(f"Invalid JSON format: {str(json_err)}. Content: {text_content[:100]}...")
                 
                 filtered_data = []
-                start_year = params.get("start_year")
-                end_year = params.get("end_year")
-                companies = params.get("companies", [])
+                start_year = params.get("start_year_a")
+                end_year = params.get("end_year_a")
+                companies = params.get("companies_a", [])
                 
                 for record in data:
                     sale_date = datetime.datetime.strptime(record["sale_date"], "%Y-%m-%d")
@@ -203,9 +206,9 @@ async def fetch_source_b_data_async(params):
                 csv_data = StringIO(text)
                 df = pd.read_csv(csv_data)
                 
-                start_year = params.get("start_year")
-                end_year = params.get("end_year")
-                companies = params.get("companies", [])
+                start_year = params.get("start_year_b")
+                end_year = params.get("end_year_b")
+                companies = params.get("companies_b", [])
                 
                 df["sale_date"] = pd.to_datetime(df["sale_date"])
                 
@@ -225,24 +228,73 @@ async def fetch_source_b_data_async(params):
 
 def worker(db_factory):
     """Worker thread to process tasks from the queue."""
-    while True:
-        task_id = task_queue.get()
-        if task_id is None:
-            break
-        
-        db = next(db_factory())
+    global workers_running
+    while workers_running:
         try:
-            process_task(task_id, db)
-        finally:
-            db.close()
-        
-        task_queue.task_done()
+            # Get task with timeout to allow checking the running flag periodically
+            task_id = task_queue.get(timeout=1.0)
+            
+            db = next(db_factory())
+            try:
+                process_task(task_id, db)
+            except Exception as e:
+                logger.error(f"Unhandled exception in worker thread: {str(e)}")
+            finally:
+                db.close()
+                task_queue.task_done()
+                
+        except queue.Empty:
+            # Queue is empty, continue checking if workers should still run
+            continue
 
-def start_worker(db_factory):
-    """Start the worker thread."""
-    threading.Thread(target=worker, args=(db_factory,), daemon=True).start()
+def start_workers(db_factory, num_workers=NUM_WORKERS):
+    """Start multiple worker threads for parallel task processing."""
+    global worker_threads, workers_running
+    
+    # Reset the workers state
+    workers_running = True
+    worker_threads = []
+    
+    logger.info(f"Starting {num_workers} worker threads for parallel task processing")
+    for i in range(num_workers):
+        thread = threading.Thread(
+            target=worker, 
+            args=(db_factory,), 
+            daemon=True,
+            name=f"TaskWorker-{i+1}"
+        )
+        thread.start()
+        worker_threads.append(thread)
+        logger.info(f"Started worker thread {thread.name}")
+    
+    return worker_threads
+
+def stop_workers():
+    """Stop all worker threads gracefully."""
+    global workers_running
+    
+    if not worker_threads:
+        logger.info("No worker threads running")
+        return
+    
+    logger.info(f"Stopping {len(worker_threads)} worker threads...")
+    workers_running = False
+    
+    # Wait for all threads to finish (with timeout)
+    for thread in worker_threads:
+        thread.join(timeout=5.0)
+        if thread.is_alive():
+            logger.warning(f"Worker thread {thread.name} did not stop gracefully")
+    
+    logger.info("All worker threads stopped")
 
 def enqueue_task(task_id: int):
     """Add a task to the queue."""
     logger.info(f"Enqueueing task {task_id}")
     task_queue.put(task_id)
+
+# For backward compatibility
+def start_worker(db_factory):
+    """Start a single worker thread (for backward compatibility)."""
+    logger.warning("Using deprecated start_worker function. Consider using start_workers instead.")
+    return start_workers(db_factory, num_workers=1)

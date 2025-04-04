@@ -28,3 +28,10 @@ start_worker(get_db)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Data Visualization API"}
+
+@app.get("/api/health", tags=["health"])
+def health_check():
+    """
+    Health check endpoint to verify the API is running
+    """
+    return {"status": "ok"}

@@ -14,15 +14,14 @@ The application consists of:
 The system allows users to submit data processing tasks, which fetch and analyze automotive sales data from external sources. The processed data is then visualized through interactive charts and dashboards.
 
 ## Features
-- Task submission and management
-- Asynchronous data processing with status tracking
-- Interactive data visualizations including:
-  - Line charts for time-series analysis
-  - Bar charts for comparative analysis
-  - Pie charts for distribution analysis
-  - Box plots for statistical analysis
-- Filtering capabilities by company, time range, and other parameters
-- Real-time KPI metrics and analytics
+
+- **RESTful API**: Built with FastAPI for high performance
+- **Data Processing**: Fetch and process financial data from multiple sources
+- **Visualization**: Interactive charts and graphs for data analysis
+- **Multi-threaded Job Queue**: Background processing of data fetching tasks
+- **Separate Filtering**: Independent filters for Source A and Source B data
+- **Comprehensive Testing**: Unit and integration tests for API endpoints and parallel processing
+
 ## Technical Stack
 ### Backend
 - FastAPI
@@ -72,12 +71,25 @@ npm start
  ```
 
 3. Access the application at http://localhost:3000
+
+## Testing
+To run tests, use the following command:
+```bash
+cd backend
+pytest tests/
+ ```
+Tests include:
+- Data fetching operations
+- Parallel processing of tasks
+- Job queue performance
+
 ## Usage
 1. Navigate to the dashboard
 2. Create a new task with desired parameters
 3. Wait for the task to complete (status will change from "pending" to "in progress" to "completed")
 4. View the analytics dashboard with visualizations of the processed data
 5. Use filters to explore different aspects of the data
+
 ## Project Structure
 ```plaintext
 data-viz-app/
